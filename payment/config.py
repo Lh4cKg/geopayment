@@ -23,7 +23,7 @@ PAYMENT_MODULES = OrderedDict(
                 "merchant_url": "https://securepay.ufc.ge:18443/ecomm2/MerchantHandler",
                 "customer_url": "https://securepay.ufc.ge/ecomm2/ClientHandler",
                 "merchant": {
-                    "MerchantName": "მერჩანტის უნიკალური იდენტიფიკატორი",
+                    "MerchantName": "მერჩანტის უნიკალური იდენტიფიკატორი, მაგ. 0000000",
                     "Currency": "981",
                     "Password": "მერჩანტის პაროლი",
                     "KeyFile": "სერტიფიკატის პაროლის ფაილის სახელი, მაგ. 0000000-Key",
