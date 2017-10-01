@@ -9,7 +9,7 @@ Created on Jul 14, 2017
 import logging
 import requests
 
-from ..utils import get_certificate_path, gel_to_tetri
+from ..utils import get_certificate_path, gel_to_tetri, parse_response
 from .. import config as settings
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ def generate_transaction_id(amount, currency, client_ip_address, msg_type="SMS",
                                        )
                                  )
         if response.status_code == 200:
-            result = dict(item.split(": ") for item in response.text.split("\n") if item.strip() != '')
+            result = parse_response(response.text)
         else:
             result = {
                 'RESULT': 'ERROR',
@@ -116,7 +116,7 @@ def check_transaction_status(trans_id, client_ip_address, verify=False, module_n
                                        )
                                  )
         if response.status_code == 200:
-            result = dict(item.split(": ") for item in response.text.split("\n") if item.strip() != '')
+            result = parse_response(response.text)
         else:
             result = {
                 'RESULT': 'ERROR',
@@ -171,7 +171,7 @@ def reversal_transaction(trans_id, amount, verify=False, module_name='tbc'):
                                        )
                                  )
         if response.status_code == 200:
-            result = dict(item.split(": ") for item in response.text.split("\n") if item.strip() != '')
+            result = parse_response(response.text)
         else:
             result = {
                 'RESULT': 'ERROR',
@@ -228,7 +228,7 @@ def refund_transaction(trans_id, amount, verify=False, module_name='tbc'):
                                        )
                                  )
         if response.status_code == 200:
-            result = dict(item.split(": ") for item in response.text.split("\n") if item.strip() != '')
+            result = parse_response(response.text)
         else:
             result = {
                 'RESULT': 'ERROR',
@@ -287,7 +287,7 @@ def dms_authorization(amount, currency, client_ip_address, msg_type="DMS", verif
                                        )
                                  )
         if response.status_code == 200:
-            result = dict(item.split(": ") for item in response.text.split("\n") if item.strip() != '')
+            result = parse_response(response.text)
         else:
             result = {
                 'RESULT': 'ERROR',
@@ -351,7 +351,7 @@ def confirm_dms_transaction(trans_id, amount, currency, client_ip_address, msg_t
                                        )
                                  )
         if response.status_code == 200:
-            result = dict(item.split(": ") for item in response.text.split("\n") if item.strip() != '')
+            result = parse_response(response.text)
         else:
             result = {
                 'RESULT': 'ERROR',
@@ -410,7 +410,7 @@ def end_of_business_day(verify=False, module_name='tbc'):
                                        )
                                  )
         if response.status_code == 200:
-            result = dict(item.split(": ") for item in response.text.split("\n") if item.strip() != '')
+            result = parse_response(response.text)
         else:
             result = {
                 'RESULT': 'ERROR',
