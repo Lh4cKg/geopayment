@@ -26,7 +26,8 @@ def generate_transaction_id(amount, currency, client_ip_address, msg_type="SMS",
     :param module_name: Payment module
     :return: result
 
-    result -> {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+    >>> result
+        {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
 
     TRANSACTION_ID - transaction identifier
     error          - in case of an error
@@ -82,8 +83,9 @@ def check_transaction_status(trans_id, client_ip_address, verify=False, module_n
     :param module_name: payment module
     :return: result
 
-    result -> {'RESULT': 'OK', 'RESULT_CODE': '000', '3DSECURE': 'ATTEMPTED',
-               'CARD_NUMBER': '', 'RRN': '', 'APPROVAL_CODE': ''}
+    >>> result
+        {'RESULT': 'OK', 'RESULT_CODE': '000', '3DSECURE': 'ATTEMPTED',
+        'CARD_NUMBER': '', 'RRN': '', 'APPROVAL_CODE': ''}
 
     RESULT             - transaction status
     RESULT_CODE        - transaction result code
@@ -141,7 +143,8 @@ def reversal_transaction(trans_id, amount, verify=False, module_name='tbc'):
     :param module_name: Payment module
     :return: result
 
-    result -> {'RESULT': 'OK', 'RESULT_CODE': ''}
+    >>> result
+        {'RESULT': 'OK', 'RESULT_CODE': ''}
 
     RESULT         - reversal transaction status
     RESULT_CODE    - reversal result code
@@ -195,7 +198,8 @@ def refund_transaction(trans_id, amount, verify=False, module_name='tbc'):
     :param module_name: Transaction amount in fractional units
     :return: result
 
-    result -> {'RESULT': '', 'RESULT_CODE': '', 'REFUND_TRANS_ID': ''}
+    >>> result
+        {'RESULT': '', 'RESULT_CODE': '', 'REFUND_TRANS_ID': ''}
 
     RESULT              - refund transaction status
     RESULT_CODE         - refund result code
@@ -253,7 +257,8 @@ def dms_authorization(amount, currency, client_ip_address, msg_type="DMS", verif
     :param module_name: Payment module
     :return: result
 
-     result -> {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+    >>> result
+        {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
 
     TRANSACTION_ID  - transaction identifier
     error           - in case of an error
@@ -312,7 +317,8 @@ def confirm_dms_transaction(trans_id, amount, currency, client_ip_address, msg_t
     :param module_name: Payment module
     :return: result
 
-    result -> {'RESULT': 'OK', 'RESULT_CODE': '', 'BRN': '' 'APPROVAL_CODE': '', 'CARD_NUMBER': ''}
+    >>> result
+        {'RESULT': 'OK', 'RESULT_CODE': '', 'BRN': '' 'APPROVAL_CODE': '', 'CARD_NUMBER': ''}
 
     RESULT          - DMS transaction status
     RESULT_CODE     - DMS transaction result code
@@ -370,10 +376,21 @@ def end_of_business_day(verify=False, module_name='tbc'):
     :param module_name: Payment module
     :return: result
 
-    result -> {'RESULT': '', 'RESULT_CODE': '', 'FLD_075': ''}
+    >>> result
+        {'RESULT': 'OK', 'RESULT_CODE': '500', 'FLD_086': '0', 'FLD_089': '0',
+        'FLD_076': '10', 'FLD_075': '5', 'FLD_088': '10', 'FLD_077': '0',
+        'FLD_074': '0', 'FLD_087': '5'}
 
     RESULT          - end of business day status
-    RESULT_CODE     - end-of-business-day result code
+    RESULT_CODE     - end of business day result code
+    FLD_074         -
+    FLD_075         - the number of credit reversals
+    FLD_076         - the number of debit transactions
+    FLD_077         -
+    FLD_086         -
+    FLD_087         - total amount of credit reversals
+    FLD_088         - total amount of debit transactions
+    FLD_089         -
 
     """
 
