@@ -17,6 +17,7 @@ class Transaction(models.Model):
     amount = models.DecimalField('Amount', decimal_places=2, max_digits=12, null=True)
     currency = models.CharField('Currency', max_length=5)
     basket = models.BigIntegerField('Basket', null=True, blank=True)
+    merchant = models.CharField('Merchant', max_length=250, null=True, blank=True)
     provider = models.CharField('Provider', max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
