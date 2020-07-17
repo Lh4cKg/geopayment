@@ -16,12 +16,20 @@ class BaseTBCMerchant(object):
 
     @property
     def description(self) -> str:
+        """
+
+        :return: merchant description
+        """
         raise NotImplementedError(
             'Merchant needs implement `description` function'
         )
 
     @property
     def client_ip(self) -> str:
+        """
+        client accepted ip address
+        :return:
+        """
         raise NotImplementedError(
             'Merchant needs implement `client_ip` function'
         )
@@ -29,7 +37,7 @@ class BaseTBCMerchant(object):
     @property
     def cert(self) -> Tuple[str, str]:
         """
-        certificate path
+        Certificate path
         :return: certificate as tuple (cert, key)
         """
         raise NotImplementedError(
@@ -39,8 +47,8 @@ class BaseTBCMerchant(object):
     @property
     def merchant_url(self) -> str:
         """
-        merchant
-        :return:
+
+        :return: merchant service url
         """
         raise NotImplementedError(
             'Merchant needs implement `merchant_url` function'
