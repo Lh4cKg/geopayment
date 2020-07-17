@@ -16,11 +16,15 @@ class BaseTBCMerchant(object):
 
     @property
     def description(self) -> str:
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Merchant needs implement `description` function'
+        )
 
     @property
     def client_ip(self) -> str:
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Merchant needs implement `client_ip` function'
+        )
 
     @property
     def cert(self) -> Tuple[str, str]:
@@ -28,7 +32,9 @@ class BaseTBCMerchant(object):
         certificate path
         :return: certificate as tuple (cert, key)
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Merchant needs implement `cert` function'
+        )
 
     @property
     def merchant_url(self) -> str:
@@ -36,13 +42,12 @@ class BaseTBCMerchant(object):
         merchant
         :return:
         """
-        raise NotImplementedError
+        raise NotImplementedError(
+            'Merchant needs implement `merchant_url` function'
+        )
 
 
 class TBCMerchant(BaseTBCMerchant):
-
-    def __init__(self):
-        pass
 
     @tbc_params('command', 'amount', 'currency', 'client_ip_addr',
                 'language', 'description', 'msg_type')
