@@ -86,18 +86,17 @@ def tbc_params(*params):
 
             klass = a[0]
             if 'description' not in kw:
-                kw['description'] = klass.description
+                payload['description'] = klass.description
+            if 'client_ip_addr' in params:
+                payload['client_ip_addr'] = klass.client_ip
 
             for param in params:
-                if param not in kw:
-                    if param == 'client_ip_addr':
-                        kw['client_ip_addr'] = klass.client_ip
-                    else:
-                        raise ValueError(
-                            f'Invalid params, {param} is a required parameter.'
-                        )
                 if param in payload:
                     continue
+                if param not in kw:
+                    raise ValueError(
+                        f'Invalid params, {param} is a required parameter.'
+                    )
 
                 if param == 'currency':
                     payload[param] = get_currency_code(kw[param])
