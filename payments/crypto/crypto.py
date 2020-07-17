@@ -9,7 +9,7 @@ Created on Jul 14, 2017
 from OpenSSL import crypto
 
 
-def p12_to_pem(cert=None, password=None, file_name=None, output=None):
+def p12_to_pem(cert=None, password=None, file_name=None, output=str()):
     """
         p12 certificate convert to pem format
     :param cert: Certificate absolute path
@@ -24,19 +24,20 @@ def p12_to_pem(cert=None, password=None, file_name=None, output=None):
         password = input('Enter Certificate passphrase: \n')
 
     with open(cert, 'rb') as f:
-        c = f.read()
+        p12 = crypto.load_pkcs12(f.read(), password)
 
-    p12 = crypto.load_pkcs12(c, password)
-
-    pem_dump_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, p12.get_certificate())
-    pem_dump_key = crypto.dump_privatekey(crypto.FILETYPE_PEM, p12.get_privatekey())
-
-    pem_cert = pem_dump_cert + pem_dump_key
-
-    with open('%s%s.pem' % (output or '', file_name or p12.get_friendlyname()), 'wb') as pem:
+    dump_cert = crypto.dump_certificate(
+        crypto.FILETYPE_PEM, p12.get_certificate()
+    )
+    dump_key = crypto.dump_privatekey(
+        crypto.FILETYPE_PEM, p12.get_privatekey()
+    )
+    pem_cert = dump_cert + dump_key
+    file_name = file_name or p12.get_friendlyname()
+    with open(f'{output}{file_name}.pem', 'wb') as pem:
         pem.write(pem_cert)
 
-    with open('%s%s-key.pem' % (output or '', file_name or p12.get_friendlyname()), 'wb') as pem_key:
-        pem_key.write(pem_dump_key)
+    with open(f'{output}{file_name}-key.pem', 'wb') as pem_key:
+        pem_key.write(dump_key)
 
     return pem, pem_key

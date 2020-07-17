@@ -1,3 +1,11 @@
-Django==1.11.28
-requests
-pyOpenSSL
+certifi==2020.6.20
+cffi==1.14.0
+chardet==3.0.4
+cryptography==2.9.2
+idna==2.10
+pycparser==2.20
+pyOpenSSL==19.1.0
+pytz==2020.1
+requests==2.24.0
+six==1.15.0
+urllib3==1.25.9

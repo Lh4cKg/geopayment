@@ -9,8 +9,8 @@ Created on Jul 14, 2017
 import logging
 import requests
 
-from ..utils import get_certificate_path, gel_to_tetri, parse_response
-from .. import config as settings
+from payments.utils import get_cert_path, gel_to_tetri, parse_response
+from .. import constants as settings
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +26,8 @@ def generate_transaction_id(amount, currency, client_ip_address, msg_type="SMS",
     :param module_name: Payment module
     :return: result
 
-    >>> result
-        {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+    >>>
+    {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
 
     TRANSACTION_ID - transaction identifier
     error          - in case of an error
