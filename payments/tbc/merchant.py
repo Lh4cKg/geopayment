@@ -12,7 +12,8 @@ from payments.utils import tbc_params, _request
 
 
 class BaseTBCMerchant(object):
-    trans_id = None
+    results: Dict[str, Any] = None
+    trans_id: str = None
 
     @property
     def description(self) -> str:
@@ -48,33 +49,46 @@ class TBCMerchant(BaseTBCMerchant):
                 'language', 'description', 'msg_type')
     @_request(verify=False, timeout=(3, 10))
     def get_trans_id(self, command: str = 'v', language: str = 'ka',
-                     msg_type: str = 'SMS', payload: Dict[str, Any] = None,
+                     msg_type: str = 'SMS',
                      **kwargs: Optional[Any]) -> Dict[str, str]:
         pass
 
-    @tbc_params('command', 'amount', 'currency', 'client_ip_addr',
-                'language', 'description', 'msg_type')
-    def check_trans_status(self, payload, **kwargs) -> Dict[str, str]:
+    @tbc_params('command', 'trans_id', 'client_ip_addr')
+    @_request(verify=False, timeout=(3, 10))
+    def check_trans_status(self, command: str = 'c',
+                           **kwargs: Optional[Any]) -> Dict[str, str]:
+        pass
+
+    @tbc_params('command', 'trans_id', 'amount')
+    @_request(verify=False, timeout=(3, 10))
+    def reversal_trans(self, command: str = 'r', **kwargs) -> Dict[str, str]:
+        pass
+
+    @tbc_params('command', 'trans_id', 'amount')
+    @_request(verify=False, timeout=(3, 10))
+    def refund_trans(self, command: str = 'k', **kwargs) -> Dict[str, str]:
         pass
 
     @tbc_params('command', 'amount', 'currency', 'client_ip_addr',
                 'language', 'description', 'msg_type')
-    def reversal_trans(self, payload, **kwargs) -> Dict[str, str]:
+    @_request(verify=False, timeout=(3, 10))
+    def dms_auth(self, command: str = 'a', language: str = 'ka',
+                 msg_type: str = 'DMS',
+                 **kwargs: Optional[Any]) -> Dict[str, str]:
         pass
 
-    @tbc_params('command', 'amount', 'currency', 'client_ip_addr',
+    @tbc_params('command', 'trans_id', 'amount', 'currency', 'client_ip_addr',
                 'language', 'description', 'msg_type')
-    def refund_trans(self, payload, **kwargs) -> Dict[str, str]:
-        pass
-
-    @BaseTBCMerchant._request
-    def dms_auth(self, payload, **kwargs) -> Dict[str, str]:
-        pass
-
-    def confirm_dms_trans(self, payload, **kwargs) -> Dict[str, str]:
+    @_request(verify=False, timeout=(3, 10))
+    def confirm_dms_trans(self, command: str = 't', language: str = 'ka',
+                          msg_type: str = 'DMS',
+                          **kwargs: Optional[Any]) -> Dict[str, str]:
         pass
 
     @classmethod
-    def end_of_business_day(cls, **kwargs):
+    @tbc_params('command')
+    @_request(verify=False, timeout=(3, 10))
+    def end_of_business_day(cls, command: str = 'b',
+                            **kwargs: Optional[Any]) -> Dict[str, str]:
         pass
 
