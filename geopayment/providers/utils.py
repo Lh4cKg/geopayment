@@ -10,10 +10,11 @@ from decimal import Decimal
 from functools import wraps
 import requests
 
-from .constants import (
+from geopayment.constants import (
     CURRENCY_CODES,
     CURRENCY_SYMBOLS,
-    ALLOW_CURRENCY_CODES
+    ALLOW_CURRENCY_CODES,
+    DEFAULT_PAYLOAD_ARGS
 )
 
 
@@ -99,7 +100,7 @@ def tbc_params(*arg_params, **kwarg_params):
                 payload['client_ip_addr'] = klass.client_ip
 
             for param in arg_params + tuple(kwarg_params.keys()):
-                if param in payload:
+                if param in payload or param in DEFAULT_PAYLOAD_ARGS:
                     continue
                 if param not in kw:
                     raise ValueError(

@@ -168,7 +168,7 @@ class TBCProvider(BaseTBCProvider):
     @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
                 command='a', language='ka', msg_type='DMS')
     @_request(verify=False, timeout=(3, 10))
-    def dms_auth(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def pre_auth_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -177,7 +177,7 @@ class TBCProvider(BaseTBCProvider):
         :return: Transaction id from merchant response
 
         >>> provider = MyTBCProvider()
-        >>> provider.dms_auth(amount=23.45, currency=981)
+        >>> provider.pre_auth_trans(amount=23.45, currency=981)
         {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
 
         TRANSACTION_ID - transaction identifier
@@ -193,7 +193,7 @@ class TBCProvider(BaseTBCProvider):
     @tbc_params('trans_id', 'amount', 'currency', 'client_ip_addr',
                 'description', command='t', language='ka', msg_type='DMS')
     @_request(verify=False, timeout=(3, 10))
-    def confirm_dms_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def confirm_pre_auth_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -202,8 +202,8 @@ class TBCProvider(BaseTBCProvider):
         :return: Transaction status codes from merchant response
 
         >>> provider = MyTBCProvider()
-        >>> provider.dms_auth(amount=23.45, currency=981)
-        >>> provider.confirm_dms_trans(trans_id=provider.trans_id, amount=23.45, currency=981)
+        >>> provider.pre_auth_trans(amount=23.45, currency=981)
+        >>> provider.confirm_pre_auth_trans(trans_id=provider.trans_id, amount=23.45, currency=981)
         {'RESULT': 'OK', 'RESULT_CODE': '', 'BRN': '' 'APPROVAL_CODE': '',
          'CARD_NUMBER': ''}
 
