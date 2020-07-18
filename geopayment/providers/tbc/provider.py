@@ -8,7 +8,7 @@ Created on Apr 14, 2020
 
 from typing import Dict, Any, Optional, Tuple
 
-from geopayment.utils import tbc_params, _request
+from geopayment.providers.utils import tbc_params, _request
 
 
 class BaseTBCProvider(object):
