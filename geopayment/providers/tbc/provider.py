@@ -21,7 +21,7 @@ class BaseTBCProvider(object):
         :return: merchant description
         """
         raise NotImplementedError(
-            'Merchant needs implement `description` function'
+            'Provider needs implement `description` function'
         )
 
     @property
@@ -31,7 +31,7 @@ class BaseTBCProvider(object):
         :return:
         """
         raise NotImplementedError(
-            'Merchant needs implement `client_ip` function'
+            'Provider needs implement `client_ip` function'
         )
 
     @property
@@ -41,7 +41,7 @@ class BaseTBCProvider(object):
         :return: certificate as tuple (cert, key)
         """
         raise NotImplementedError(
-            'Merchant needs implement `cert` function'
+            'Provider needs implement `cert` function'
         )
 
     @property
@@ -51,7 +51,7 @@ class BaseTBCProvider(object):
         :return: merchant service url
         """
         raise NotImplementedError(
-            'Merchant needs implement `merchant_url` function'
+            'Provider needs implement `merchant_url` function'
         )
 
 
