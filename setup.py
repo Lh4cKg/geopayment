@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
+from geopayment import __version__
 
 
 def read(filename):
@@ -11,7 +12,7 @@ def read(filename):
 
 setup(
     name='geopayment',
-    version='0.1',
+    version=__version__,
     author='Lasha Gogua',
     author_email='gogualasha@gmail.com',
     description='Python SDK for Georgian Payment Providers',
@@ -35,9 +36,9 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'cryptography==2.9.2',
-        'pyOpenSSL==19.1.0',
-        'requests==2.24.0',
+        'cryptography>=2.9.2',
+        'pyOpenSSL>=19.1.0',
+        'requests>=2.24.0',
     ],
     packages=find_packages(exclude=['example', 'docs']),
     include_package_data=True,

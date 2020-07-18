@@ -10,7 +10,7 @@ from decimal import Decimal
 from functools import wraps
 import requests
 
-from providers.constants import (
+from .constants import (
     CURRENCY_CODES,
     CURRENCY_SYMBOLS,
     ALLOW_CURRENCY_CODES
