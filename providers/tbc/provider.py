@@ -8,10 +8,10 @@ Created on Apr 14, 2020
 
 from typing import Dict, Any, Optional, Tuple
 
-from payments.utils import tbc_params, _request
+from providers.utils import tbc_params, _request
 
 
-class BaseTBCMerchant(object):
+class BaseTBCProvider(object):
     trans_id: str = None
 
     @property
@@ -55,22 +55,32 @@ class BaseTBCMerchant(object):
         )
 
 
-class TBCMerchant(BaseTBCMerchant):
+class TBCProvider(BaseTBCProvider):
 
-    @tbc_params('command', 'amount', 'currency', 'client_ip_addr',
-                'language', 'description', 'msg_type')
+    def __init__(self) -> None:
+        assert callable(self.description) is False, \
+            '`description` must be property, not callable'
+        assert callable(self.client_ip) is False, \
+            '`client_ip` must be property, not callable'
+        assert callable(self.cert) is False, \
+            '`cert` must be property, not callable'
+        assert callable(self.merchant_url) is False, \
+            '`merchant_url` must be property, not callable'
+
+    @tbc_params('amount', 'currency', 'client_ip_addr',
+                'description', command='v', language='ka', msg_type='SMS')
     @_request(verify=False, timeout=(3, 10))
-    def get_trans_id(self, command: str = 'v', language: str = 'ka',
-                     msg_type: str = 'SMS',
-                     **kwargs: Optional[Any]) -> Dict[str, str]:
+    def get_trans_id(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
-        :param command: Transaction type
-        :param language: The language of the transaction performed
-        :param msg_type: Transaction authorization type
+        command: Transaction type
+        language: The language of the transaction performed
+        msg_type: Transaction authorization type
+
         :param kwargs: Other operation parameters
         :return: Transaction id from merchant response
 
-        >>>
+        >>> provider = MyTBCProvider()
+        >>> provider.get_trans_id(amount=23.45, currency='GEL')
         {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
 
         TRANSACTION_ID - transaction identifier
@@ -78,18 +88,22 @@ class TBCMerchant(BaseTBCMerchant):
 
         """
 
-        return kwargs['result']
+        result = kwargs['result']
+        if 'TRANSACTION_ID' in result:
+            self.trans_id = result['TRANSACTION_ID']
+        return result
 
-    @tbc_params('command', 'trans_id', 'client_ip_addr')
+    @tbc_params('trans_id', 'client_ip_addr', command='c')
     @_request(verify=False, timeout=(3, 10))
-    def check_trans_status(self, command: str = 'c',
-                           **kwargs: Optional[Any]) -> Dict[str, str]:
+    def check_trans_status(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
-        :param command: Transaction type
+        command: Transaction type
         :param kwargs: Other operation parameters
         :return: Transaction status codes from merchant response
 
-        >>>
+        >>> provider = MyTBCProvider()
+        >>> provider.get_trans_id(amount=23.45, currency='GEL')
+        >>> provider.check_trans_status(trans_id=provider.trans_id)
         {'RESULT': 'OK', 'RESULT_CODE': '000', '3DSECURE': 'ATTEMPTED',
         'CARD_NUMBER': '', 'RRN': '', 'APPROVAL_CODE': ''}
 
@@ -106,16 +120,17 @@ class TBCMerchant(BaseTBCMerchant):
 
         return kwargs['result']
 
-    @tbc_params('command', 'trans_id', 'amount')
+    @tbc_params('trans_id', 'amount', command='r')
     @_request(verify=False, timeout=(3, 10))
-    def reversal_trans(self, command: str = 'r',
-                       **kwargs: Optional[Any]) -> Dict[str, str]:
+    def reversal_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
-        :param command: Transaction type
+        command: Transaction type
         :param kwargs: Other operation parameters
         :return: Transaction status codes from merchant response
 
-        >>>
+        >>> provider = MyTBCProvider()
+        >>> provider.get_trans_id(amount=23.45, currency='GEL')
+        >>> provider.reversal_trans(trans_id=provider.trans_id, amount=12.20)
         {'RESULT': 'OK', 'RESULT_CODE': ''}
 
         RESULT         - reversal transaction status
@@ -127,16 +142,17 @@ class TBCMerchant(BaseTBCMerchant):
 
         return kwargs['result']
 
-    @tbc_params('command', 'trans_id', 'amount')
+    @tbc_params('trans_id', 'amount', command='k')
     @_request(verify=False, timeout=(3, 10))
-    def refund_trans(self, command: str = 'k',
-                     **kwargs: Optional[Any]) -> Dict[str, str]:
+    def refund_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
-        :param command: Transaction type
+        command: Transaction type
         :param kwargs: Other operation parameters
         :return: Transaction status codes from merchant response
 
-        >>>
+        >>> provider = MyTBCProvider()
+        >>> provider.get_trans_id(amount=23.45, currency='GEL')
+        >>> provider.refund_trans(trans_id=provider.trans_id, amount=23.45)
         {'RESULT': '', 'RESULT_CODE': '', 'REFUND_TRANS_ID': ''}
 
         RESULT              - refund transaction status
@@ -149,20 +165,19 @@ class TBCMerchant(BaseTBCMerchant):
 
         return kwargs['result']
 
-    @tbc_params('command', 'amount', 'currency', 'client_ip_addr',
-                'language', 'description', 'msg_type')
+    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
+                command='a', language='ka', msg_type='DMS')
     @_request(verify=False, timeout=(3, 10))
-    def dms_auth(self, command: str = 'a', language: str = 'ka',
-                 msg_type: str = 'DMS',
-                 **kwargs: Optional[Any]) -> Dict[str, str]:
+    def dms_auth(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
-        :param command: Transaction type
-        :param language: The language of the transaction performed
-        :param msg_type: Transaction authorization type
+        command: Transaction type
+        language: The language of the transaction performed
+        msg_type: Transaction authorization type
         :param kwargs: Other operation parameters
         :return: Transaction id from merchant response
 
-        >>>
+        >>> provider = MyTBCProvider()
+        >>> provider.dms_auth(amount=23.45, currency=981)
         {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
 
         TRANSACTION_ID - transaction identifier
@@ -170,22 +185,25 @@ class TBCMerchant(BaseTBCMerchant):
 
         """
 
-        return kwargs['result']
+        result = kwargs['result']
+        if 'TRANSACTION_ID' in result:
+            self.trans_id = result['TRANSACTION_ID']
+        return result
 
-    @tbc_params('command', 'trans_id', 'amount', 'currency', 'client_ip_addr',
-                'language', 'description', 'msg_type')
+    @tbc_params('trans_id', 'amount', 'currency', 'client_ip_addr',
+                'description', command='t', language='ka', msg_type='DMS')
     @_request(verify=False, timeout=(3, 10))
-    def confirm_dms_trans(self, command: str = 't', language: str = 'ka',
-                          msg_type: str = 'DMS',
-                          **kwargs: Optional[Any]) -> Dict[str, str]:
+    def confirm_dms_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
-        :param command: Transaction type
-        :param language: The language of the transaction performed
-        :param msg_type: Transaction authorization type
+        command: Transaction type
+        language: The language of the transaction performed
+        msg_type: Transaction authorization type
         :param kwargs: Other operation parameters
         :return: Transaction status codes from merchant response
 
-        >>>
+        >>> provider = MyTBCProvider()
+        >>> provider.dms_auth(amount=23.45, currency=981)
+        >>> provider.confirm_dms_trans(trans_id=provider.trans_id, amount=23.45, currency=981)
         {'RESULT': 'OK', 'RESULT_CODE': '', 'BRN': '' 'APPROVAL_CODE': '',
          'CARD_NUMBER': ''}
 
@@ -200,16 +218,16 @@ class TBCMerchant(BaseTBCMerchant):
 
         return kwargs['result']
 
-    @tbc_params('command')
+    @tbc_params(command='b')
     @_request(verify=False, timeout=(3, 10))
-    def end_of_business_day(self, command: str = 'b',
-                            **kwargs: Optional[Any]) -> Dict[str, str]:
+    def end_of_business_day(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
-        :param command: Transaction type
+        command: Transaction type
         :param kwargs: Other operation parameters
         :return: End of business day status codes from merchant response
 
-        >>>
+        >>> provider = MyTBCProvider()
+        >>> provider.end_of_business_day()
         {'RESULT': 'OK', 'RESULT_CODE': '500', 'FLD_086': '0', 'FLD_089': '0',
         'FLD_076': '10', 'FLD_075': '5', 'FLD_088': '10', 'FLD_077': '0',
         'FLD_074': '0', 'FLD_087': '5'}
@@ -230,7 +248,7 @@ class TBCMerchant(BaseTBCMerchant):
         return kwargs['result']
 
     @classmethod
-    def quick_end_of_business_day(cls):
+    def quick_end_of_business_day(cls) -> Dict[str, str]:
         """
         This function is same as `end_of_business_day` for quick call end of
         business day command.

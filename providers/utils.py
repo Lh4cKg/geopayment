@@ -10,7 +10,11 @@ from decimal import Decimal
 from functools import wraps
 import requests
 
-from payments.constants import CURRENCY_CODES, ALLOW_CURRENCY_CODES
+from providers.constants import (
+    CURRENCY_CODES,
+    CURRENCY_SYMBOLS,
+    ALLOW_CURRENCY_CODES
+)
 
 
 def get_client_ip(request):
@@ -68,10 +72,13 @@ def get_currency_code(code):
     if code in CURRENCY_CODES:
         return code
 
-    return ALLOW_CURRENCY_CODES.get(code)
+    if code not in CURRENCY_SYMBOLS:
+        raise ValueError('Invalid currency code, Allowed codes: GEL, USD, EUR')
+
+    return ALLOW_CURRENCY_CODES[code]
 
 
-def tbc_params(*params):
+def tbc_params(*arg_params, **kwarg_params):
     """
     Decorator that pops all accepted parameters from method's kwargs and puts
     them in the payload argument.
@@ -80,17 +87,18 @@ def tbc_params(*params):
     def wrapper(f):
         @wraps(f)
         def wrapped(*a, **kw):
+            kw.update(kwarg_params)
             payload = dict()
             if 'payload' in kw:
                 payload = kw.pop('payload')
 
             klass = a[0]
-            if 'description' not in kw:
+            if 'description' not in kw and 'description' in arg_params:
                 payload['description'] = klass.description
-            if 'client_ip_addr' in params:
+            if 'client_ip_addr' in arg_params:
                 payload['client_ip_addr'] = klass.client_ip
 
-            for param in params:
+            for param in arg_params + tuple(kwarg_params.keys()):
                 if param in payload:
                     continue
                 if param not in kw:
@@ -116,25 +124,27 @@ def _request(**kw):
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
+            for k, v in kw.items():
+                if k in kwargs:
+                    continue
+                kwargs[k] = v
             klass = args[0]
             try:
                 resp = requests.post(
-                    klass.merchant_url, data=kw['payload'],
-                    verify=kw['verify'], timeout=kw['timeout'],
+                    klass.merchant_url, data=kwargs['payload'],
+                    verify=kwargs['verify'], timeout=kwargs['timeout'],
                     cert=klass.cert
                 )
                 if resp.status_code == 200:
                     result = parse_response(resp.text)
                 else:
                     result = {
-                        'result': resp.text,
-                        'status_code': resp.status_code,
+                        'RESULT': resp.text,
+                        'STATUS_CODE': resp.status_code,
                     }
-            except requests.exceptions.RequestException:
+            except requests.exceptions.RequestException as e:
                 result = {
-                    'result': 'error',
-                    'error_type': 'timeout',
-                    'status_code': 408,
+                    'RESULT': str(e)
                 }
             return f(result=result, *args, **kwargs)
 
