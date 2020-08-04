@@ -22,8 +22,9 @@ $ pip install geopayment
 
 ### Modules
 
-    1. [For TBCPay]()
-    2. [For iPay (BOG)]()
+   1. [For TBCPay](https://github.com/Lh4cKg/geopayment/blob/master/docs/tbc.md)
+   
+   2. [For iPay (BOG)](https://github.com/Lh4cKg/geopayment/blob/master/docs/bog.md)
 
 
 ##### License
