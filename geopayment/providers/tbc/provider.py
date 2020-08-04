@@ -14,6 +14,16 @@ from geopayment.providers.utils import tbc_params, tbc_request
 class BaseTBCProvider(object):
     trans_id: str = None
 
+    def __init__(self) -> None:
+        assert callable(self.description) is False, \
+            '`description` must be property, not callable'
+        assert callable(self.client_ip) is False, \
+            '`client_ip` must be property, not callable'
+        assert callable(self.cert) is False, \
+            '`cert` must be property, not callable'
+        assert callable(self.merchant_url) is False, \
+            '`merchant_url` must be property, not callable'
+
     @property
     def description(self) -> str:
         """
@@ -56,16 +66,6 @@ class BaseTBCProvider(object):
 
 
 class TBCProvider(BaseTBCProvider):
-
-    def __init__(self) -> None:
-        assert callable(self.description) is False, \
-            '`description` must be property, not callable'
-        assert callable(self.client_ip) is False, \
-            '`client_ip` must be property, not callable'
-        assert callable(self.cert) is False, \
-            '`cert` must be property, not callable'
-        assert callable(self.merchant_url) is False, \
-            '`merchant_url` must be property, not callable'
 
     @tbc_params('amount', 'currency', 'client_ip_addr',
                 'description', command='v', language='ka', msg_type='SMS')
