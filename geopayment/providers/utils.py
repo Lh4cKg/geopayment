@@ -120,7 +120,7 @@ def tbc_params(*arg_params, **kwarg_params):
     return wrapper
 
 
-def _request(**kw):
+def tbc_request(**kw):
 
     def wrapper(f):
         @wraps(f)

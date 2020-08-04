@@ -8,7 +8,7 @@ Created on Apr 14, 2020
 
 from typing import Dict, Any, Optional, Tuple
 
-from geopayment.providers.utils import tbc_params, _request
+from geopayment.providers.utils import tbc_params, tbc_request
 
 
 class BaseTBCProvider(object):
@@ -69,7 +69,7 @@ class TBCProvider(BaseTBCProvider):
 
     @tbc_params('amount', 'currency', 'client_ip_addr',
                 'description', command='v', language='ka', msg_type='SMS')
-    @_request(verify=False, timeout=(3, 10))
+    @tbc_request(verify=False, timeout=(3, 10))
     def get_trans_id(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -94,7 +94,7 @@ class TBCProvider(BaseTBCProvider):
         return result
 
     @tbc_params('trans_id', 'client_ip_addr', command='c')
-    @_request(verify=False, timeout=(3, 10))
+    @tbc_request(verify=False, timeout=(3, 10))
     def check_trans_status(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -121,7 +121,7 @@ class TBCProvider(BaseTBCProvider):
         return kwargs['result']
 
     @tbc_params('trans_id', 'amount', command='r')
-    @_request(verify=False, timeout=(3, 10))
+    @tbc_request(verify=False, timeout=(3, 10))
     def reversal_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -143,7 +143,7 @@ class TBCProvider(BaseTBCProvider):
         return kwargs['result']
 
     @tbc_params('trans_id', 'amount', command='k')
-    @_request(verify=False, timeout=(3, 10))
+    @tbc_request(verify=False, timeout=(3, 10))
     def refund_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -167,7 +167,7 @@ class TBCProvider(BaseTBCProvider):
 
     @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
                 command='a', language='ka', msg_type='DMS')
-    @_request(verify=False, timeout=(3, 10))
+    @tbc_request(verify=False, timeout=(3, 10))
     def pre_auth_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -192,7 +192,7 @@ class TBCProvider(BaseTBCProvider):
 
     @tbc_params('trans_id', 'amount', 'currency', 'client_ip_addr',
                 'description', command='t', language='ka', msg_type='DMS')
-    @_request(verify=False, timeout=(3, 10))
+    @tbc_request(verify=False, timeout=(3, 10))
     def confirm_pre_auth_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -219,7 +219,7 @@ class TBCProvider(BaseTBCProvider):
         return kwargs['result']
 
     @tbc_params(command='b')
-    @_request(verify=False, timeout=(3, 10))
+    @tbc_request(verify=False, timeout=(3, 10))
     def end_of_business_day(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
