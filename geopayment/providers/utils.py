@@ -14,7 +14,8 @@ from geopayment.constants import (
     CURRENCY_CODES,
     CURRENCY_SYMBOLS,
     ALLOW_CURRENCY_CODES,
-    DEFAULT_PAYLOAD_ARGS
+    DEFAULT_PAYLOAD_ARGS,
+    BOG_ITEM_KEYS
 )
 
 
@@ -138,6 +139,138 @@ def tbc_request(**kw):
                 )
                 if resp.status_code == 200:
                     result = parse_response(resp.text)
+                else:
+                    result = {
+                        'RESULT': resp.text,
+                        'STATUS_CODE': resp.status_code,
+                    }
+            except requests.exceptions.RequestException as e:
+                result = {
+                    'RESULT': str(e)
+                }
+            return f(result=result, *args, **kwargs)
+
+        return wrapped
+
+    return wrapper
+
+
+def bog_request(**kw):
+    """
+
+        "https://dev.ipay.ge/opay/api/v1/oauth2/token"
+        -H "accept: application/json"
+        -H "Authorization: Basic your_secret_key_client_id_base64"
+        -H "Content-Type: application/x-www-form-urlencoded"
+        -d "grant_type=client_credentials"
+
+    :param kw:
+    :return:
+    """
+
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            for k, v in kw.items():
+                if k in kwargs:
+                    continue
+                kwargs[k] = v
+
+            klass = args[0]
+            data, headers = dict(), dict()
+
+            if 'token_type' in kwargs and kwargs['token_type'] == 'Basic':
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                credentials = klass.get_credentials().decode('utf-8')
+                headers['Authorization'] = f'Basic {credentials}'
+                if 'grant_type' in kwargs:
+                    data['grant_type'] = kwargs['grant_type']
+                else:
+                    data['grant_type'] = 'client_credentials'
+            elif 'token_type' in kwargs and kwargs['token_type'] == 'Bearer':
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/json'
+                access_token = klass.access['access_token']
+                headers['Authorization'] = f'Bearer {access_token}'
+                if 'intent' in kwargs:
+                    data['intent'] = kwargs['intent']
+                else:
+                    data['intent'] = 'CAPTURE'
+
+                if 'redirect_url' in kwargs:
+                    data['redirect_url'] = kwargs['redirect_url']
+                else:
+                    data['redirect_url'] = klass.redirect_url
+
+                if 'shop_order_id' not in kwargs:
+                    raise ValueError(
+                        f'Invalid params, `shop_order_id` is a '
+                        f'required parameter.'
+                    )
+                data['shop_order_id'] = kwargs['shop_order_id']
+                if 'items' not in kwargs:
+                    raise ValueError(
+                        f'Invalid params, `items` is a required parameter.'
+                    )
+                amount = Decimal(0)
+                for item in kwargs['items']:
+                    for key in BOG_ITEM_KEYS:
+                        if key not in item:
+                            raise ValueError(
+                                f'Invalid params, item `{key}` is a '
+                                f'required parameter.'
+                            )
+                    amount += Decimal(item['amount'])
+
+                data['purchase_units'] = [
+                    {
+                        'amount': {
+                            'currency_code': kwargs['currency_code'],
+                            'value': amount.quantize(Decimal('.00'))
+                        },
+                        'industry_type': 'ECOMMERCE'
+                    }
+                ]
+
+            try:
+                resp = requests.post(
+                    f'{klass.merchant_url}{kwargs["endpoint"]}', data=data,
+                    verify=kwargs['verify'], timeout=kwargs['timeout']
+                )
+                if resp.status_code == 200:
+                    result = resp.json()
+                elif resp.status_code == 400:
+                    result = {
+                        'RESULT': 'Bad request, missing parameters',
+                        'STATUS_CODE': 400,
+                    }
+                elif resp.status_code == 401:
+                    result = {
+                        'RESULT': 'Unauthorized, missing basic '
+                                  'authorization credentials',
+                        'STATUS_CODE': 401,
+                    }
+                elif resp.status_code == 403:
+                    result = {
+                        'RESULT': 'Forbidden',
+                        'STATUS_CODE': 403,
+                    }
+                elif resp.status_code == 405:
+                    result = {
+                        'RESULT': 'Method Not Allowed',
+                        'STATUS_CODE': 405,
+                    }
+                elif resp.status_code == 406:
+                    result = {
+                        'RESULT': 'Method Not Acceptable',
+                        'STATUS_CODE': 406,
+                    }
+                elif resp.status_code == 415:
+                    result = {
+                        'RESULT': 'Unsupported Media Type',
+                        'STATUS_CODE': 415,
+                    }
                 else:
                     result = {
                         'RESULT': resp.text,

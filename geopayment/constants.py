@@ -15,3 +15,5 @@ CURRENCY_CODES = (981, 840, 978)
 ALLOW_CURRENCY_CODES = dict(zip(CURRENCY_SYMBOLS, CURRENCY_CODES))
 
 DEFAULT_PAYLOAD_ARGS = ('command', 'msg_type')
+
+BOG_ITEM_KEYS = ('amount', 'description', 'quantity', 'product_id')
