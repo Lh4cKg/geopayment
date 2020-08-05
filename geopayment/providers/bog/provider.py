@@ -73,8 +73,8 @@ class BaseIPayProvider(object):
 
 class IPayProvider(BaseIPayProvider):
 
-    @bog_request(verify=True, timeout=(3, 10), token_type='Basic',
-                 endpoint='oauth2/token')
+    @bog_request(verify=True, timeout=(3, 10), endpoint='oauth2/token',
+                 method='post', api='auth')
     def get_auth(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         checkout api docs: https://developer.ipay.ge/checkout
@@ -86,8 +86,8 @@ class IPayProvider(BaseIPayProvider):
         self.access = kwargs['result']
         return self.access
 
-    @bog_request(verify=True, timeout=(3, 10), token_type='Bearer',
-                 currency_code='GEL', endpoint='checkout/orders')
+    @bog_request(verify=True, timeout=(3, 10), currency_code='GEL',
+                 endpoint='checkout/orders', method='post', api='checkout')
     def checkout(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         checkout api docs: https://developer.ipay.ge/checkout
@@ -105,3 +105,50 @@ class IPayProvider(BaseIPayProvider):
             if link:
                 self.rel_approve = link[0]['href']
         return result
+
+    @bog_request(verify=True, timeout=(3, 10), endpoint='checkout/refund',
+                 method='post', api='refund')
+    def refund(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+
+        :param kwargs:
+        :return:
+        """
+
+        return kwargs['result']
+
+    @bog_request(verify=True, timeout=(3, 10),
+                 endpoint='checkout/orders/status/{order_id}', method='get',
+                 api='status')
+    def checkout_status(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+
+        :param kwargs:
+        :return:
+        """
+
+        return kwargs['result']
+
+    @bog_request(verify=True, timeout=(3, 10),
+                 endpoint='checkout/orders/{order_id}', method='get',
+                 api='details')
+    def checkout_details(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+
+        :param kwargs:
+        :return:
+        """
+
+        return kwargs['result']
+
+    @bog_request(verify=True, timeout=(3, 10),
+                 endpoint='checkout/payment/{order_id}', method='get',
+                 api='payment')
+    def payment_details(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+
+        :param kwargs:
+        :return:
+        """
+
+        return kwargs['result']

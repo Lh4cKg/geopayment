@@ -171,15 +171,11 @@ def bog_request(**kw):
                     continue
                 kwargs[k] = v
 
-            if 'token_type' not in kwargs:
-                raise ValueError(
-                    f'Invalid params, `token_type` is a required parameter.'
-                )
-
             klass = args[0]
-            data, headers, post_params = dict(), dict(), dict()
-            token_type = kwargs['token_type']
-            if token_type == 'Basic':
+            data, headers, request_params = dict(), dict(), dict()
+            endpoint = kw['endpoint']
+            api = kw['api']
+            if api == 'auth':
                 headers['accept'] = 'application/json'
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
                 credentials = klass.get_credentials().decode('utf-8')
@@ -188,11 +184,14 @@ def bog_request(**kw):
                     data['grant_type'] = kwargs['grant_type']
                 else:
                     data['grant_type'] = 'client_credentials'
-                post_params.update({'data': data})
-            elif token_type == 'Bearer':
+                request_params.update({'data': data})
+            elif api == 'checkout':
                 headers['accept'] = 'application/json'
                 headers['Content-Type'] = 'application/json'
-                access_token = klass.access['access_token']
+                if 'access_token' not in kwargs:
+                    access_token = klass.access['access_token']
+                else:
+                    access_token = kwargs['access_token']
                 headers['Authorization'] = f'Bearer {access_token}'
                 if 'intent' in kwargs:
                     data['intent'] = kwargs['intent']
@@ -236,17 +235,59 @@ def bog_request(**kw):
                         'industry_type': 'ECOMMERCE'
                     }
                 ]
-                post_params.update({'json': data})
+                request_params.update({'json': data})
+            elif api == 'refund':
+                if 'order_id' not in kwargs:
+                    raise ValueError(
+                        f'Invalid params, `order_id` is a required parameter.'
+                    )
+                if 'amount' not in kwargs:
+                    raise ValueError(
+                        f'Invalid params, `amount` is a required parameter.'
+                    )
+                data = {
+                    'order_id': kwargs['order_id'],
+                    'amount': kwargs['amount'],
+                }
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                if 'access_token' not in kwargs:
+                    access_token = klass.access['access_token']
+                else:
+                    access_token = kwargs['access_token']
+                headers['Authorization'] = f'Bearer {access_token}'
+                request_params.update({'data': data})
+            elif api in ('status', 'details', 'payment'):
+                if 'order_id' not in kwargs:
+                    raise ValueError(
+                        f'Invalid params, `order_id` is a required parameter.'
+                    )
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/json'
+                if 'access_token' not in kwargs:
+                    access_token = klass.access['access_token']
+                else:
+                    access_token = kwargs['access_token']
+                headers['Authorization'] = f'Bearer {access_token}'
+                endpoint = endpoint.format(order_id=kwargs['order_id'])
+            else:
+                raise ValueError(
+                    'Unsupported `api` type.'
+                )
 
-            post_params.update({
-                'url': f'{klass.merchant_url}{kwargs["endpoint"]}',
+            request_params.update({
+                'method': kw['method'],
+                'url': f'{klass.merchant_url}{endpoint}',
                 'headers': headers,
                 'verify': kwargs['verify'],
                 'timeout': kwargs['timeout']
             })
 
+            if kw['method'] == 'get':
+                request_params.setdefault('allow_redirects', True)
+
             try:
-                resp = requests.post(**post_params)
+                resp = requests.request(**request_params)
                 if resp.status_code == 200:
                     result = resp.json()
                 else:
