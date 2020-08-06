@@ -30,8 +30,8 @@ class BaseIPayProvider(object):
     @property
     def client_id(self) -> str:
         """
-        client id
-        :return:
+
+        :return: client id
         """
         raise NotImplementedError(
             'Provider needs implement `client_id` function'
@@ -40,8 +40,8 @@ class BaseIPayProvider(object):
     @property
     def secret_key(self) -> str:
         """
-        client secret key
-        :return:
+
+        :return: client secret key
         """
         raise NotImplementedError(
             'Provider needs implement `secret_key` function'
@@ -51,7 +51,7 @@ class BaseIPayProvider(object):
     def merchant_url(self) -> str:
         """
 
-        :return: merchant service url
+        :return: provider service url
         """
         raise NotImplementedError(
             'Provider needs implement `merchant_url` function'
@@ -61,7 +61,7 @@ class BaseIPayProvider(object):
     def redirect_url(self) -> str:
         """
 
-        :return: redirect url of product
+        :return: redirect success or fail url
         """
         raise NotImplementedError(
             'Provider needs implement `redirect_url` function'
