@@ -12,6 +12,9 @@ from typing import Optional, Any, Dict
 from geopayment.providers.utils import bog_request
 
 
+__all__ = ['IPayProvider']
+
+
 class BaseIPayProvider(object):
     access: Dict = None
     rel_approve: str = None
