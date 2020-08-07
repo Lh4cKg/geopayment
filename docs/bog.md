@@ -87,13 +87,13 @@ Consider other operations, e.g. refund, order status, order details, payment det
     
     input:
     
-        order_id: list (required)
+        order_id: str (required)
         amount: float, int (required), max decimal places is 2.
         access_token: str (optional)
     
     ```python
     provider = MyIPayProvider()
-    result = provider.refund()
+    result = provider.refund(order_id='5ead592ae9c19caef0b0e79a066297adf244bed5', amount='5.04')
     print(result)
     ```
    
