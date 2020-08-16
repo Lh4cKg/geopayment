@@ -188,11 +188,6 @@ def bog_request(**kw):
             elif api == 'checkout':
                 headers['accept'] = 'application/json'
                 headers['Content-Type'] = 'application/json'
-                if 'access_token' not in kwargs:
-                    access_token = klass.access['access_token']
-                else:
-                    access_token = kwargs['access_token']
-                headers['Authorization'] = f'Bearer {access_token}'
                 if 'intent' in kwargs:
                     data['intent'] = kwargs['intent']
                 else:
@@ -251,11 +246,6 @@ def bog_request(**kw):
                 }
                 headers['accept'] = 'application/json'
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
-                if 'access_token' not in kwargs:
-                    access_token = klass.access['access_token']
-                else:
-                    access_token = kwargs['access_token']
-                headers['Authorization'] = f'Bearer {access_token}'
                 request_params.update({'data': data})
             elif api in ('status', 'details', 'payment'):
                 if 'order_id' not in kwargs:
@@ -264,16 +254,18 @@ def bog_request(**kw):
                     )
                 headers['accept'] = 'application/json'
                 headers['Content-Type'] = 'application/json'
-                if 'access_token' not in kwargs:
-                    access_token = klass.access['access_token']
-                else:
-                    access_token = kwargs['access_token']
-                headers['Authorization'] = f'Bearer {access_token}'
                 endpoint = endpoint.format(order_id=kwargs['order_id'])
             else:
                 raise ValueError(
                     'Unsupported `api` type.'
                 )
+
+            if api != 'auth':
+                if 'access_token' not in kwargs:
+                    access_token = klass.access['access_token']
+                else:
+                    access_token = kwargs['access_token']
+                headers['Authorization'] = f'Bearer {access_token}'
 
             request_params.update({
                 'method': kw['method'],
