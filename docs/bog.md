@@ -18,7 +18,7 @@ class MyIPayProvider(IPayProvider):
         return '1006'
 
     @property
-    def merchant_url(self) -> str:
+    def service_url(self) -> str:
         return 'https://dev.ipay.ge/opay/api/v1/'
 
     @property
