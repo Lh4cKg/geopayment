@@ -25,8 +25,8 @@ class BaseIPayProvider(object):
             '`client_id` must be property, not callable'
         assert callable(self.secret_key) is False, \
             '`secret_key` must be property, not callable'
-        assert callable(self.merchant_url) is False, \
-            '`merchant_url` must be property, not callable'
+        assert callable(self.service_url) is False, \
+            '`service_url` must be property, not callable'
         assert callable(self.redirect_url) is False, \
             '`redirect_url` must be property, not callable'
 
@@ -51,13 +51,13 @@ class BaseIPayProvider(object):
         )
 
     @property
-    def merchant_url(self) -> str:
+    def service_url(self) -> str:
         """
 
         :return: provider service url
         """
         raise NotImplementedError(
-            'Provider needs implement `merchant_url` function'
+            'Provider needs implement `service_url` function'
         )
 
     @property

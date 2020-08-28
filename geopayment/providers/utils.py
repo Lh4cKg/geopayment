@@ -261,15 +261,21 @@ def bog_request(**kw):
                 )
 
             if api != 'auth':
-                if 'access_token' not in kwargs:
-                    access_token = klass.access['access_token']
-                else:
-                    access_token = kwargs['access_token']
+                try:
+                    if 'access_token' not in kwargs:
+                        access_token = klass.access['access_token']
+                    else:
+                        access_token = kwargs['access_token']
+                except TypeError:
+                    raise ValueError(
+                        'Invalid params, `access_token` is a required parameter. '
+                        'Use authorization method `get_auth` or set `access_token` value.'
+                    )
                 headers['Authorization'] = f'Bearer {access_token}'
 
             request_params.update({
                 'method': kw['method'],
-                'url': f'{klass.merchant_url}{endpoint}',
+                'url': f'{klass.service_url}{endpoint}',
                 'headers': headers,
                 'verify': kwargs['verify'],
                 'timeout': kwargs['timeout']
