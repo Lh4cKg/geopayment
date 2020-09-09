@@ -9,7 +9,7 @@ Created on Apr 14, 2020
 from base64 import b64encode
 from typing import Optional, Any, Dict
 
-from geopayment.providers.utils import bog_request
+from geopayment.providers.utils import _request, bog_params
 
 
 __all__ = ['IPayProvider']
@@ -76,8 +76,8 @@ class BaseIPayProvider(object):
 
 class IPayProvider(BaseIPayProvider):
 
-    @bog_request(verify=True, timeout=(3, 10), endpoint='oauth2/token',
-                 method='post', api='auth')
+    @bog_params(endpoint='oauth2/token', api='auth')
+    @_request(verify=True, timeout=(3, 10), method='post')
     def get_auth(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         checkout api docs: https://developer.ipay.ge/checkout
@@ -89,8 +89,8 @@ class IPayProvider(BaseIPayProvider):
         self.access = kwargs['result']
         return self.access
 
-    @bog_request(verify=True, timeout=(3, 10), currency_code='GEL',
-                 endpoint='checkout/orders', method='post', api='checkout')
+    @bog_params(currency_code='GEL', endpoint='checkout/orders', api='checkout')
+    @_request(verify=True, timeout=(3, 10), method='post')
     def checkout(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         checkout api docs: https://developer.ipay.ge/checkout
@@ -109,8 +109,8 @@ class IPayProvider(BaseIPayProvider):
                 self.rel_approve = link[0]['href']
         return result
 
-    @bog_request(verify=True, timeout=(3, 10), endpoint='checkout/refund',
-                 method='post', api='refund')
+    @bog_params(endpoint='checkout/refund', api='refund')
+    @_request(verify=True, timeout=(3, 10), method='post')
     def refund(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
 
@@ -120,9 +120,8 @@ class IPayProvider(BaseIPayProvider):
 
         return kwargs['result']
 
-    @bog_request(verify=True, timeout=(3, 10),
-                 endpoint='checkout/orders/status/{order_id}', method='get',
-                 api='status')
+    @bog_params(endpoint='checkout/orders/status/{order_id}', api='status')
+    @_request(verify=True, timeout=(3, 10), method='get')
     def checkout_status(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
 
@@ -132,9 +131,8 @@ class IPayProvider(BaseIPayProvider):
 
         return kwargs['result']
 
-    @bog_request(verify=True, timeout=(3, 10),
-                 endpoint='checkout/orders/{order_id}', method='get',
-                 api='details')
+    @bog_params(endpoint='checkout/orders/{order_id}', api='details')
+    @_request(verify=True, timeout=(3, 10), method='get')
     def checkout_details(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
 
@@ -144,9 +142,8 @@ class IPayProvider(BaseIPayProvider):
 
         return kwargs['result']
 
-    @bog_request(verify=True, timeout=(3, 10),
-                 endpoint='checkout/payment/{order_id}', method='get',
-                 api='payment')
+    @bog_params(endpoint='checkout/payment/{order_id}', api='payment')
+    @_request(verify=True, timeout=(3, 10), method='get')
     def payment_details(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
 

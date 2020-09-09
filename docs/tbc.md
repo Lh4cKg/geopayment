@@ -37,7 +37,7 @@ class MyTBCProvider(TBCProvider):
         return 'xx.xx.xx.xx'
 
     @property
-    def merchant_url(self) -> str:
+    def service_url(self) -> str:
         return 'https://ecommerce.ufc.ge:18443/ecomm2/MerchantHandler'
 
     @property

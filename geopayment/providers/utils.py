@@ -9,6 +9,8 @@ Created on Jul 14, 2017
 import json
 from decimal import Decimal, ROUND_UP
 from functools import wraps
+from typing import Dict, Any
+
 import requests
 
 
@@ -82,6 +84,57 @@ def get_currency_code(code):
     return ALLOW_CURRENCY_CODES[code]
 
 
+def _request(**kw):
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            request_params: Dict[str, Any] = dict()
+            for k, v in kw.items():
+                if k in kwargs:
+                    continue
+                kwargs[k] = v
+
+            klass = args[0]
+            method = kwargs['method']
+            request_params['url'] = kwargs.get('url', klass.service_url)
+            request_params['method'] = method
+            request_params.update(kwargs['payload'])
+            request_params['headers'] = kwargs.get('headers')
+            request_params['verify'] = kwargs['verify']
+            request_params['timeout'] = kwargs['timeout']
+            request_params['cert'] = getattr(klass, 'cert', None)
+            if method == 'get':
+                request_params['allow_redirects'] = True
+
+            try:
+                resp = requests.request(**request_params)
+                if resp.status_code == 200:
+                    try:
+                        result = resp.json()
+                    except (ValueError, json.decoder.JSONDecodeError):
+                        result = parse_response(resp.text)
+                    except Exception:
+                        result = resp.text
+                else:
+                    try:
+                        result = resp.json()
+                    except (ValueError, json.decoder.JSONDecodeError):
+                        result = {
+                            'RESULT': resp.text,
+                            'STATUS_CODE': resp.status_code,
+                        }
+            except requests.exceptions.RequestException as e:
+                result = {
+                    'RESULT': str(e)
+                }
+
+            return f(result=result, *args, **kwargs)
+
+        return wrapped
+
+    return wrapper
+
+
 def tbc_params(*arg_params, **kwarg_params):
     """
     Decorator that pops all accepted parameters from method's kwargs and puts
@@ -116,48 +169,14 @@ def tbc_params(*arg_params, **kwarg_params):
                     payload[param] = gel_to_tetri(kw[param])
                 else:
                     payload[param] = kw[param]
-            return f(payload=payload, *a, **kw)
+            return f(payload={'data': payload}, *a, **kw)
 
         return wrapped
 
     return wrapper
 
 
-def tbc_request(**kw):
-
-    def wrapper(f):
-        @wraps(f)
-        def wrapped(*args, **kwargs):
-            for k, v in kw.items():
-                if k in kwargs:
-                    continue
-                kwargs[k] = v
-            klass = args[0]
-            try:
-                resp = requests.post(
-                    klass.merchant_url, data=kwargs['payload'],
-                    verify=kwargs['verify'], timeout=kwargs['timeout'],
-                    cert=klass.cert
-                )
-                if resp.status_code == 200:
-                    result = parse_response(resp.text)
-                else:
-                    result = {
-                        'RESULT': resp.text,
-                        'STATUS_CODE': resp.status_code,
-                    }
-            except requests.exceptions.RequestException as e:
-                result = {
-                    'RESULT': str(e)
-                }
-            return f(result=result, *args, **kwargs)
-
-        return wrapped
-
-    return wrapper
-
-
-def bog_request(**kw):
+def bog_params(**kw):
     """
     :param kw:
     :return:
@@ -172,7 +191,7 @@ def bog_request(**kw):
                 kwargs[k] = v
 
             klass = args[0]
-            data, headers, request_params = dict(), dict(), dict()
+            data, headers, payload = dict(), dict(), dict()
             endpoint = kw['endpoint']
             api = kw['api']
             if api == 'auth':
@@ -184,7 +203,7 @@ def bog_request(**kw):
                     data['grant_type'] = kwargs['grant_type']
                 else:
                     data['grant_type'] = 'client_credentials'
-                request_params.update({'data': data})
+                payload.update({'data': data})
             elif api == 'checkout':
                 headers['accept'] = 'application/json'
                 headers['Content-Type'] = 'application/json'
@@ -230,7 +249,7 @@ def bog_request(**kw):
                         'industry_type': 'ECOMMERCE'
                     }
                 ]
-                request_params.update({'json': data})
+                payload.update({'json': data})
             elif api == 'refund':
                 if 'order_id' not in kwargs:
                     raise ValueError(
@@ -246,7 +265,7 @@ def bog_request(**kw):
                 }
                 headers['accept'] = 'application/json'
                 headers['Content-Type'] = 'application/x-www-form-urlencoded'
-                request_params.update({'data': data})
+                payload.update({'data': data})
             elif api in ('status', 'details', 'payment'):
                 if 'order_id' not in kwargs:
                     raise ValueError(
@@ -273,34 +292,12 @@ def bog_request(**kw):
                     )
                 headers['Authorization'] = f'Bearer {access_token}'
 
-            request_params.update({
-                'method': kw['method'],
+            kwargs = {
                 'url': f'{klass.service_url}{endpoint}',
-                'headers': headers,
-                'verify': kwargs['verify'],
-                'timeout': kwargs['timeout']
-            })
+                'headers': headers
+            }
 
-            if kw['method'] == 'get':
-                request_params.setdefault('allow_redirects', True)
-
-            try:
-                resp = requests.request(**request_params)
-                if resp.status_code == 200:
-                    result = resp.json()
-                else:
-                    try:
-                        result = resp.json()
-                    except (ValueError, json.decoder.JSONDecodeError):
-                        result = {
-                            'RESULT': resp.text,
-                            'STATUS_CODE': resp.status_code,
-                        }
-            except requests.exceptions.RequestException as e:
-                result = {
-                    'RESULT': str(e)
-                }
-            return f(result=result, *args, **kwargs)
+            return f(payload=payload, *args, **kwargs)
 
         return wrapped
 

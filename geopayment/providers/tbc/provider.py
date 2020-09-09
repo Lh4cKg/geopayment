@@ -8,7 +8,7 @@ Created on Apr 14, 2020
 
 from typing import Dict, Any, Optional, Tuple
 
-from geopayment.providers.utils import tbc_params, tbc_request
+from geopayment.providers.utils import _request, tbc_params
 
 
 __all__ = ['TBCProvider']
@@ -24,8 +24,8 @@ class BaseTBCProvider(object):
             '`client_ip` must be property, not callable'
         assert callable(self.cert) is False, \
             '`cert` must be property, not callable'
-        assert callable(self.merchant_url) is False, \
-            '`merchant_url` must be property, not callable'
+        assert callable(self.service_url) is False, \
+            '`service_url` must be property, not callable'
 
     @property
     def description(self) -> str:
@@ -58,13 +58,13 @@ class BaseTBCProvider(object):
         )
 
     @property
-    def merchant_url(self) -> str:
+    def service_url(self) -> str:
         """
 
         :return: merchant service url
         """
         raise NotImplementedError(
-            'Provider needs implement `merchant_url` function'
+            'Provider needs implement `service_url` function'
         )
 
 
@@ -72,7 +72,7 @@ class TBCProvider(BaseTBCProvider):
 
     @tbc_params('amount', 'currency', 'client_ip_addr',
                 'description', command='v', language='ka', msg_type='SMS')
-    @tbc_request(verify=False, timeout=(3, 10))
+    @_request(verify=False, timeout=(3, 10), method='post')
     def get_trans_id(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -97,7 +97,7 @@ class TBCProvider(BaseTBCProvider):
         return result
 
     @tbc_params('trans_id', 'client_ip_addr', command='c')
-    @tbc_request(verify=False, timeout=(3, 10))
+    @_request(verify=False, timeout=(3, 10), method='post')
     def check_trans_status(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -124,7 +124,7 @@ class TBCProvider(BaseTBCProvider):
         return kwargs['result']
 
     @tbc_params('trans_id', 'amount', command='r')
-    @tbc_request(verify=False, timeout=(3, 10))
+    @_request(verify=False, timeout=(3, 10), method='post')
     def reversal_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -146,7 +146,7 @@ class TBCProvider(BaseTBCProvider):
         return kwargs['result']
 
     @tbc_params('trans_id', 'amount', command='k')
-    @tbc_request(verify=False, timeout=(3, 10))
+    @_request(verify=False, timeout=(3, 10), method='post')
     def refund_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -170,7 +170,7 @@ class TBCProvider(BaseTBCProvider):
 
     @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
                 command='a', language='ka', msg_type='DMS')
-    @tbc_request(verify=False, timeout=(3, 10))
+    @_request(verify=False, timeout=(3, 10), method='post')
     def pre_auth_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -195,7 +195,7 @@ class TBCProvider(BaseTBCProvider):
 
     @tbc_params('trans_id', 'amount', 'currency', 'client_ip_addr',
                 'description', command='t', language='ka', msg_type='DMS')
-    @tbc_request(verify=False, timeout=(3, 10))
+    @_request(verify=False, timeout=(3, 10), method='post')
     def confirm_pre_auth_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type
@@ -222,7 +222,7 @@ class TBCProvider(BaseTBCProvider):
         return kwargs['result']
 
     @tbc_params(command='b')
-    @tbc_request(verify=False, timeout=(3, 10))
+    @_request(verify=False, timeout=(3, 10), method='post')
     def end_of_business_day(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
         command: Transaction type

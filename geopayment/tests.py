@@ -18,7 +18,7 @@ class TestsTBCProvider(unittest.TestCase):
                 return '127.0.0.1'
 
             @property
-            def merchant_url(self):
+            def service_url(self):
                 return 'https://ecommerce.ufc.ge:18443/ecomm2/MerchantHandler'
 
             @property
@@ -47,21 +47,21 @@ class TestsTBCProvider(unittest.TestCase):
             '`client_ip` is incorrect'
         )
 
-    def test_merchant_url(self):
+    def test_service_url(self):
         self.assertIs(
-            type(self.provider.merchant_url), str,
-            '`merchant_url` must be string'
+            type(self.provider.service_url), str,
+            '`service_url` must be string'
         )
         self.assertRegex(
-            self.provider.merchant_url,
+            self.provider.service_url,
             r'^(https|http):\/\/.*\.[a-z]{2,6}',
-            '`merchant_url` is incorrect'
+            '`service_url` is incorrect'
         )
 
     def test_cert(self):
         self.assertIs(
             type(self.provider.cert), tuple,
-            '`merchant_url` must be tuple'
+            '`service_url` must be tuple'
         )
         self.assertIs(
             type(self.provider.cert[0]), str,
