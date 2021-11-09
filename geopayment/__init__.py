@@ -1,3 +1,3 @@
-from geopayment.providers import TBCProvider, IPayProvider
+from geopayment.providers import CredoProvider, TBCProvider, IPayProvider
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'

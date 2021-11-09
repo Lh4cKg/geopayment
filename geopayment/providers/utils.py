@@ -9,7 +9,7 @@ Created on Jul 14, 2017
 import json
 from decimal import Decimal, ROUND_UP
 from functools import wraps
-from typing import Dict, Any
+from typing import Dict, Any, Union
 
 import requests
 
@@ -23,7 +23,7 @@ from geopayment.constants import (
 )
 
 
-def get_client_ip(request):
+def get_client_ip(request) -> str:
     """
     This method support only Django web framework
     :param request:
@@ -38,7 +38,7 @@ def get_client_ip(request):
     return ip
 
 
-def parse_response(content):
+def parse_response(content: str) -> Dict:
     """
 
     :param content: response from payment provider
@@ -55,17 +55,20 @@ def parse_response(content):
     )
 
 
-def gel_to_tetri(amount):
+def gel_to_tetri(
+        amount: Union[int, float, Decimal],
+        quantize: str = '1.00') -> int:
     """
 
     :param amount: type of decimal
+    :param quantize: type of string
     :return: amount in tetri
 
     >>> amount = Decimal('0.01')
     >>> gel_to_tetri(amount)
     1
     """
-    return int(Decimal(amount).quantize(Decimal('1.00')) * 100)
+    return int(Decimal(amount).quantize(Decimal(quantize)) * 100)
 
 
 def get_currency_code(code):
