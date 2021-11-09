@@ -5,8 +5,9 @@ GeoPayment - Python SDK for Georgian Payment Providers
 ------
 
 `Python >= 3.7.x`   
-`cryptography >= 2.9.x`     
-`pyOpenSSL >=19.x`
+`cryptography >= 3.3.2`     
+`pyOpenSSL >= 21.0.0`   
+`requests >= 2.26.0`
 
 
 ### Quick Start

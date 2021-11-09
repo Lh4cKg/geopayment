@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
 from setuptools import setup, find_packages
 from geopayment import __version__
 
@@ -36,11 +33,12 @@ setup(
         'Programming Language :: Python :: 3.7',
     ],
     install_requires=[
-        'cryptography>=2.9.2',
-        'pyOpenSSL>=19.1.0',
-        'requests>=2.24.0',
+        'cryptography>=3.3.2',
+        'pyOpenSSL>=21.0.0',
+        'requests>=2.26.0',
     ],
     packages=find_packages(exclude=['example', 'docs']),
     include_package_data=True,
     zip_safe=False,
+    python_requires='>=3.7',
 )
