@@ -66,6 +66,7 @@ class CredoProvider(BaseCredoProvider):
         kwargs['check'] = check(self.password, **kwargs)
         if 'orderCode' not in kwargs:
             kwargs['orderCode'] = int(time())
+        kwargs['installmentLength'] = 1
         kwargs['clientFullName'] = str()
         kwargs['mobile'] = str()
         kwargs['email'] = str()
