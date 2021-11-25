@@ -1,5 +1,6 @@
+import json
 from time import time
-from typing import Dict
+from typing import Dict, Union
 
 from geopayment.providers.credo.installment import check
 
@@ -38,7 +39,7 @@ class BaseCredoProvider(object):
 
 class CredoProvider(BaseCredoProvider):
 
-    def installment(self, **kwargs) -> Dict:
+    def installment(self, **kwargs) -> Union[str, Dict]:
         """
         {
           "merchantId": "7220",
@@ -71,4 +72,6 @@ class CredoProvider(BaseCredoProvider):
         kwargs['mobile'] = str()
         kwargs['email'] = str()
         kwargs['factAddress'] = str()
+        if kwargs.pop('dump', None):
+            return json.dumps(kwargs, ensure_ascii=False)
         return kwargs
