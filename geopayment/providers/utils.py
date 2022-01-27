@@ -19,7 +19,8 @@ from geopayment.constants import (
     CURRENCY_SYMBOLS,
     ALLOW_CURRENCY_CODES,
     DEFAULT_PAYLOAD_ARGS,
-    BOG_ITEM_KEYS
+    BOG_ITEM_KEYS,
+    BOG_INSTALLMENT_ITEM_KEYS
 )
 
 
@@ -252,6 +253,102 @@ def bog_params(**kw):
                         'industry_type': 'ECOMMERCE'
                     }
                 ]
+                payload.update({'json': data})
+            elif api == 'installment-checkout':
+                """
+                {
+                  "intent": "LOAN",
+                  "installment_month": 6,
+                  "installment_type": "STANDARD",
+                  "shop_order_id": "123456",
+                  "success_redirect_url": "https://demo.ipay.ge/success",
+                  "fail_redirect_url": "https://demo.ipay.ge/fail",
+                  "reject_redirect_url": "https://demo.ipay.ge/reject",
+                  "validate_items": true,
+                  "locale": "ka",
+                  "purchase_units": [
+                    {
+                      "amount": {
+                        "currency_code": "GEL",
+                        "value": "500.00"
+                      }
+                    }
+                  ],
+                  "cart_items": [
+                    {
+                      "total_item_amount": "10.50",
+                      "item_description": "test_product",
+                      "total_item_qty": "1",
+                      "item_vendor_code": "123456",
+                      "product_image_url": "https://example.com/product.jpg",
+                      "item_site_detail_url": "https://example.com/product"
+                    }
+                  ]
+                }
+                """
+                error_message = (
+                    'Invalid params, `{0}` is a required parameter. '
+                    'Read api docs <https://api.bog.ge/docs/installment/create-order>.'
+                )
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/json'
+
+                data['intent'] = kwargs.get('intent', 'LOAN')
+                if 'installment_month' in kwargs:
+                    data['installment_month'] = kwargs['installment_month']
+                else:
+                    raise ValueError(error_message.format('installment_month'))
+
+                if 'installment_type' in kwargs:
+                    data['installment_type'] = kwargs['installment_type']
+                else:
+                    raise ValueError(error_message.format('installment_type'))
+
+                if 'shop_order_id' in kwargs:
+                    data['shop_order_id'] = kwargs['shop_order_id']
+                else:
+                    raise ValueError(error_message.format('shop_order_id'))
+
+                data['success_redirect_url'] = kwargs.get('success_redirect_url', klass.redirect_url)
+                data['fail_redirect_url'] = kwargs.get('fail_redirect_url', klass.redirect_url)
+                data['reject_redirect_url'] = kwargs.get('reject_redirect_url', klass.redirect_url)
+                data['validate_items'] = kwargs.get('validate_items', True)
+                data['locale'] = kwargs.get('locale', klass.default_locale)
+
+                if 'cart_items' not in kwargs:
+                    raise ValueError(error_message.format('cart_items'))
+
+                data['cart_items'] = kwargs['cart_items']
+                amount = Decimal(0)
+                for item in kwargs['cart_items']:
+                    for key in BOG_INSTALLMENT_ITEM_KEYS:
+                        if key not in item:
+                            raise ValueError(error_message.format(key))
+                    amount += Decimal(item['total_item_amount'])
+                    item['total_item_amount'] = str(item['total_item_amount'])
+
+                if 'currency_code' not in kwargs:
+                    raise ValueError(error_message.format('currency_code'))
+                if 'purchase_units' not in kwargs:
+                    data['purchase_units'] = [{
+                        'amount': {
+                            'currency_code': kwargs['currency_code'],
+                            'value': str(amount.quantize(Decimal('.00'), rounding=ROUND_UP))
+                        },
+                    }]
+
+                payload.update({'json': data})
+            elif api == 'installment-calculate':
+                if 'amount' not in kwargs:
+                    raise ValueError(
+                        f'Invalid params, `amount` is a required parameter.'
+                    )
+                data['amount'] = kwargs['amount']
+
+                if 'client_id' not in kwargs:
+                    data['client_id'] = klass.client_id
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/json'
                 payload.update({'json': data})
             elif api == 'refund':
                 if 'order_id' not in kwargs:
