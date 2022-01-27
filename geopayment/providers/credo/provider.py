@@ -2,7 +2,7 @@ import json
 from time import time
 from typing import Dict, Union
 
-from geopayment.providers.credo.installment import check
+from geopayment.providers.credo.installment import Installment
 
 
 class BaseCredoProvider(object):
@@ -37,41 +37,5 @@ class BaseCredoProvider(object):
         )
 
 
-class CredoProvider(BaseCredoProvider):
-
-    def installment(self, **kwargs) -> Union[str, Dict]:
-        """
-        {
-          "merchantId": "7220",
-          "orderCode": "17407",
-          "check": "f61136837ebe753b4a1e9b9f9893f805",
-          "products": [
-            {
-              "id": "4634",
-              "title": "PHILIPS HP6549/00",
-              "amount": "2",
-              "price": "41400",
-              "type": "0"
-            }
-          ],
-          "installmentLength": 12,
-          "clientFullName": "სახელი, გვარი",
-          "mobile": "595123456",
-          "email": "info@credo.ge",
-          "factAddress": "test address N6"
-        }
-
-        """
-
-        kwargs['merchantId'] = self.merchant_id
-        kwargs['check'] = check(self.password, **kwargs)
-        if 'orderCode' not in kwargs:
-            kwargs['orderCode'] = int(time())
-        kwargs['installmentLength'] = 1
-        kwargs['clientFullName'] = str()
-        kwargs['mobile'] = str()
-        kwargs['email'] = str()
-        kwargs['factAddress'] = str()
-        if kwargs.pop('dump', None):
-            return json.dumps(kwargs, ensure_ascii=False)
-        return kwargs
+class CredoProvider(Installment, BaseCredoProvider):
+    pass
