@@ -343,7 +343,7 @@ def bog_params(**kw):
                     raise ValueError(
                         f'Invalid params, `amount` is a required parameter.'
                     )
-                data['amount'] = kwargs['amount']
+                data['amount'] = str(kwargs['amount'])
 
                 if 'client_id' not in kwargs:
                     data['client_id'] = klass.client_id
