@@ -151,7 +151,8 @@ def tbc_params(*arg_params, **kwarg_params):
             kw.update(kwarg_params)
             payload = dict()
             if 'payload' in kw:
-                payload = kw.pop('payload')
+                payload = kw.pop('payload', dict())
+            payload.update(kwarg_params)
 
             klass = a[0]
             if 'description' not in kw and 'description' in arg_params:
