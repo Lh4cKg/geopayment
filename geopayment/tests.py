@@ -73,7 +73,7 @@ class TestsTBCProvider(unittest.TestCase):
         )
 
     def test_get_trans_id(self):
-        result = self.provider.get_trans_id(amout=23.50, currency=981)
+        result = self.provider.get_trans_id(amount=23.50, currency='GEL')
         self.assertIsNone(
             self.provider.trans_id,
             'transaction identificator is none'
@@ -88,7 +88,7 @@ class TestsTBCProvider(unittest.TestCase):
         )
 
     def test_pre_auth_trans(self):
-        result = self.provider.pre_auth_trans(amout=23.50, currency=981)
+        result = self.provider.pre_auth_trans(amount=23.50, currency=981)
         self.assertIsNone(
             self.provider.trans_id,
             'transaction identificator is none'
@@ -112,7 +112,7 @@ class TestsTBCProvider(unittest.TestCase):
             '`trans_id` must be string'
         )
         result = self.provider.confirm_pre_auth_trans(
-            amout=23.50, currency=981
+            amount=23.50, currency=981
         )
         self.assertNotIn(
             'RESULT', result,
