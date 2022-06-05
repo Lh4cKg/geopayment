@@ -28,29 +28,7 @@ class TestsTBCProvider(unittest.TestCase):
                     '/absolute/output/path/out-cert-name-key.pem'
                 )
 
-        class TesTBCProvider(TBCProvider):
-
-            @property
-            def description(self):
-                return 'mybrand description'
-
-            @property
-            def client_ip(self):
-                return '127.0.0.1'
-
-            @property
-            def service_url(self):
-                return 'https://ecommerce.ufc.ge:18443/ecomm2/MerchantHandler'
-
-            @property
-            def cert(self):
-                return (
-                    '/home/gogua/projects/dev/geopayment/certs/5301400.pem',
-                    '/home/gogua/projects/dev/geopayment/certs/5301400-key.pem'
-                )
-
         self.provider = MyTBCProvider()
-        self.provider = TesTBCProvider()
 
     def test_description(self):
         self.assertIs(

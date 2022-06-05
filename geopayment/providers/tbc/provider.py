@@ -296,7 +296,7 @@ class TBCProvider(BaseTBCProvider):
             self.trans_id = result['TRANSACTION_ID']
         return result
 
-    @tbc_params('amount', 'trans_id', command='g')
+    @tbc_params('trans_id', 'amount', command='g')
     @_request(verify=False, timeout=(3, 10), method='post')
     def refund_to_debit_card(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
