@@ -223,8 +223,8 @@ class TBCProvider(BaseTBCProvider):
         return kwargs['result']
 
     @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
-                'biller_client_id', 'expiry', command='z', language='ka',
-                msg_type='SMS')
+                'biller_client_id', 'expiry', 'perspayee_expiry', 'perspayee_gen',
+                command='z', language='ka', msg_type='SMS')
     @_request(verify=False, timeout=(3, 10), method='post')
     def card_register_with_deduction(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
@@ -246,7 +246,8 @@ class TBCProvider(BaseTBCProvider):
         return kwargs['result']
 
     @tbc_params('currency', 'client_ip_addr', 'description', 'biller_client_id',
-                'expiry', command='p', language='ka', msg_type='AUTH')
+                'expiry', 'perspayee_expiry', 'perspayee_gen',
+                command='p', language='ka', msg_type='AUTH')
     @_request(verify=False, timeout=(3, 10), method='post')
     def card_register_with_zero_auth(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """

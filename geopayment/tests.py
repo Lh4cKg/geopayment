@@ -230,7 +230,7 @@ class TestsTBCProvider(unittest.TestCase):
 
         result = self.provider.card_register_with_deduction(
             amount=20.3, currency='GEL', biller_client_id='GEOpayMENTs',
-            expiry='1225'
+            expiry='1225', perspayee_expiry='1225', perspayee_gen=1
         )
         self.assertNotIn(
             'HTTP_STATUS_CODE', result,
