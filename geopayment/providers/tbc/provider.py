@@ -16,6 +16,7 @@ __all__ = ['TBCProvider']
 
 class BaseTBCProvider(object):
     trans_id: str = None
+    refund_trans_id: str = None
 
     def __init__(self) -> None:
         assert callable(self.description) is False, \
@@ -220,6 +221,106 @@ class TBCProvider(BaseTBCProvider):
         """
 
         return kwargs['result']
+
+    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
+                'biller_client_id', 'expiry', command='z', language='ka',
+                msg_type='SMS')
+    @_request(verify=False, timeout=(3, 10), method='post')
+    def card_register_with_deduction(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+        command: Transaction type
+        language: The language of the transaction performed
+        msg_type: Transaction authorization type
+
+        :param kwargs: Other operation parameters
+        :return: Transaction id from merchant response
+
+        >>> provider = MyTBCProvider()
+        >>> provider.card_register_with_deduction(amount=23.45, currency='GEL')
+        {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+
+        TRANSACTION_ID - transaction identifier
+        error          - in case of an error
+
+        """
+        return kwargs['result']
+
+    @tbc_params('currency', 'client_ip_addr', 'description', 'biller_client_id',
+                'expiry', command='p', language='ka', msg_type='AUTH')
+    @_request(verify=False, timeout=(3, 10), method='post')
+    def card_register_with_zero_auth(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+        command: Transaction type
+        language: The language of the transaction performed
+        msg_type: Transaction authorization type
+
+        :param kwargs: Other operation parameters
+        :return: Transaction id from merchant response
+
+        >>> provider = MyTBCProvider()
+        >>> provider.card_register_with_auth(currency='GEL')
+        {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+
+        TRANSACTION_ID - transaction identifier
+        error          - in case of an error
+
+        """
+        return kwargs['result']
+
+    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
+                'biller_client_id', command='e', language='ka')
+    @_request(verify=False, timeout=(3, 10), method='post')
+    def recurring_payment(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+        command: Transaction type
+        language: The language of the transaction performed
+
+        :param kwargs: Other operation parameters
+        :return: Transaction id from merchant response
+
+        >>> provider = MyTBCProvider()
+        >>> provider.recurring_payment(amount=23.6, currency='GEL')
+        {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+
+        TRANSACTION_ID - transaction identifier
+        RESULT         - operation result
+        RESULT_CODE    - operation result code
+        RRN            - rrn
+        APPROVAL_CODE  - operation approval code
+        error          - in case of an error
+
+        """
+        result = kwargs['result']
+        if 'TRANSACTION_ID' in result:
+            self.trans_id = result['TRANSACTION_ID']
+        return result
+
+    @tbc_params('amount', 'trans_id', command='g')
+    @_request(verify=False, timeout=(3, 10), method='post')
+    def refund_to_debit_card(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+        command: Transaction type
+
+        :param kwargs: Other operation parameters
+        :return: Refund transaction id from merchant response
+
+        >>> provider = MyTBCProvider()
+        >>> trans_id = 'NMQfTRLUTne3eywr9YnAU78Qxxw='
+        >>> provider.refund_to_debit_card(amount=23.6, trans_id=trans_id)
+        {'REFUND_TRANS_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+
+        REFUND_TRANS_ID - refund transaction identifier
+        RESULT          - operation result
+        RESULT_CODE     - operation result code
+        error           - in case of an error
+
+        """
+        if 'trans_id' in kwargs:
+            self.trans_id = kwargs['trans_id']
+        result = kwargs['result']
+        if 'REFUND_TRANS_ID' in result:
+            self.refund_trans_id = result['REFUND_TRANS_ID']
+        return result
 
     @tbc_params(command='b')
     @_request(verify=False, timeout=(3, 10), method='post')

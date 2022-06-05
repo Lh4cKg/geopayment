@@ -88,6 +88,26 @@ def get_currency_code(code):
     return ALLOW_CURRENCY_CODES[code]
 
 
+def perform_http_response(response: requests.Response):
+    """
+    :param response: Response object from HTTP Request
+    :return: result from merchant handler
+    """
+    try:
+        result = response.json()
+        result.update({'HTTP_STATUS_CODE': response.status_code})
+    except (ValueError, json.decoder.JSONDecodeError):
+        result = parse_response(response.text)
+        result.update({'HTTP_STATUS_CODE': response.status_code})
+    except Exception as e:
+        result = {
+            'RESULT': response.text,
+            'ERROR': str(e),
+            'HTTP_STATUS_CODE': response.status_code
+        }
+    return result
+
+
 def _request(**kw):
     def wrapper(f):
         @wraps(f)
@@ -112,25 +132,9 @@ def _request(**kw):
 
             try:
                 resp = requests.request(**request_params)
-                if resp.status_code == 200:
-                    try:
-                        result = resp.json()
-                    except (ValueError, json.decoder.JSONDecodeError):
-                        result = parse_response(resp.text)
-                    except Exception:
-                        result = resp.text
-                else:
-                    try:
-                        result = resp.json()
-                    except (ValueError, json.decoder.JSONDecodeError):
-                        result = {
-                            'RESULT': resp.text,
-                            'STATUS_CODE': resp.status_code,
-                        }
+                result = perform_http_response(resp)
             except requests.exceptions.RequestException as e:
-                result = {
-                    'RESULT': str(e)
-                }
+                result = {'ERROR': str(e)}
 
             return f(result=result, *args, **kwargs)
 

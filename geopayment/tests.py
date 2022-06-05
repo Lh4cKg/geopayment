@@ -28,7 +28,29 @@ class TestsTBCProvider(unittest.TestCase):
                     '/absolute/output/path/out-cert-name-key.pem'
                 )
 
+        class TesTBCProvider(TBCProvider):
+
+            @property
+            def description(self):
+                return 'mybrand description'
+
+            @property
+            def client_ip(self):
+                return '127.0.0.1'
+
+            @property
+            def service_url(self):
+                return 'https://ecommerce.ufc.ge:18443/ecomm2/MerchantHandler'
+
+            @property
+            def cert(self):
+                return (
+                    '/home/gogua/projects/dev/geopayment/certs/5301400.pem',
+                    '/home/gogua/projects/dev/geopayment/certs/5301400-key.pem'
+                )
+
         self.provider = MyTBCProvider()
+        self.provider = TesTBCProvider()
 
     def test_description(self):
         self.assertIs(
@@ -203,6 +225,70 @@ class TestsTBCProvider(unittest.TestCase):
             'REFUND_TRANS_ID', result,
             '`result` not contains refund transaction identificator'
         )
+
+    def test_card_register_with_deduction(self):
+
+        result = self.provider.card_register_with_deduction(
+            amount=20.3, currency='GEL', biller_client_id='GEOpayMENTs',
+            expiry='1225'
+        )
+        self.assertNotIn(
+            'HTTP_STATUS_CODE', result,
+            '`result` not includes `HTTP_STATUS_CODE`'
+        )
+        self.assertNotIn(
+            'RESULT', result,
+            'not includes `RESULT`'
+        )
+        self.assertNotIn(
+            'RESULT_CODE', result,
+            '`result` not includes `RESULT_CODE` (success, fail, etc)'
+        )
+
+    def test_card_register_with_zero_auth(self):
+        result = self.provider.card_register_with_zero_auth(
+            currency='GEL', biller_client_id='GEOpayMENTs', expiry='1225'
+        )
+        self.assertNotIn(
+            'HTTP_STATUS_CODE', result,
+            '`result` not includes `HTTP_STATUS_CODE`'
+        )
+        self.assertNotIn(
+            'RESULT', result,
+            'not includes `RESULT`'
+        )
+        self.assertNotIn(
+            'RESULT_CODE', result,
+            '`result` not includes `RESULT_CODE` (success, fail, etc)'
+        )
+
+    def test_recurring_payment(self):
+        result = self.provider.recurring_payment(
+            amount=20.3, currency='GEL', biller_client_id='GEOpayMENTs'
+        )
+        self.assertNotIn(
+            'HTTP_STATUS_CODE', result,
+            '`result` not includes `HTTP_STATUS_CODE`'
+        )
+        self.assertNotIn(
+            'RESULT', result,
+            'not includes `RESULT`'
+        )
+        self.assertNotIn(
+            'TRANSACTION_ID', result,
+            '`result` not includes `TRANSACTION_ID`'
+        )
+        self.assertNotIn(
+            'APPROVAL_CODE', result,
+            '`result` not includes `APPROVAL_CODE`'
+        )
+        self.assertNotIn(
+            'RESULT_CODE', result,
+            '`result` not includes `RESULT_CODE` (success, fail, etc)'
+        )
+
+    def test_refund_to_debit_card(self):
+        pass
 
     def test_end_of_business_day(self):
         result = self.provider.end_of_business_day()
