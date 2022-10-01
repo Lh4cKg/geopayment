@@ -1,3 +1,5 @@
+# Bitore.sigs
+
 import unittest
 
 from geopayment import TBCProvider
