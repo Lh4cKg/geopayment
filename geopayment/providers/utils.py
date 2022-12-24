@@ -13,14 +13,14 @@ from typing import Dict, Any, Union
 
 import requests
 
-
 from geopayment.constants import (
     CURRENCY_CODES,
     CURRENCY_SYMBOLS,
     ALLOW_CURRENCY_CODES,
     DEFAULT_PAYLOAD_ARGS,
     BOG_ITEM_KEYS,
-    BOG_INSTALLMENT_ITEM_KEYS
+    BOG_INSTALLMENT_ITEM_KEYS,
+    TBC_INSTALLMENT_ITEM_KEYS
 )
 
 
@@ -132,9 +132,14 @@ def _request(**kw):
 
             try:
                 resp = requests.request(**request_params)
+                kwargs['http_status_code'] = resp.status_code
                 result = perform_http_response(resp)
+                kwargs['headers'] = resp.headers
             except requests.exceptions.RequestException as e:
                 result = {'ERROR': str(e)}
+                kwargs['headers'] = dict()
+                if 'http_status_code' not in kwargs:
+                    kwargs['http_status_code'] = 'N/A'
 
             return f(result=result, *args, **kwargs)
 
@@ -179,6 +184,144 @@ def tbc_params(*arg_params, **kwarg_params):
                 else:
                     payload[param] = kw[param]
             return f(payload={'data': payload}, *a, **kw)
+
+        return wrapped
+
+    return wrapper
+
+
+def tbc_installment_params(**kw):
+    """
+    :param kw:
+    :return:
+    """
+
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            for k, v in kw.items():
+                if k in kwargs:
+                    continue
+                kwargs[k] = v
+
+            klass = args[0]
+            data, headers, payload = dict(), dict(), dict()
+            endpoint = kw['endpoint']
+            if endpoint.startswith('/'):
+                raise ValueError(
+                    '`endpoint` beginning with a "/". '
+                    'Remove this slash it is unnecessary.'
+                )
+            api = kw['api']
+            if api == 'auth':
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/x-www-form-urlencoded'
+                credentials = klass.get_basic_auth().decode('utf-8')
+                headers['Authorization'] = f'Basic {credentials}'
+                if 'grant_type' in kwargs:
+                    data['grant_type'] = kwargs['grant_type']
+                if 'scope' in kwargs:
+                    data['scope'] = kwargs['scope']
+                payload.update({'data': data})
+            elif api == 'create':
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/json'
+                if 'merchant_key' in kwargs:
+                    data['merchantKey'] = kwargs['merchant_key']
+                else:
+                    data['merchantKey'] = klass.merchant_key
+                if 'campaign_id' in kwargs:
+                    data['campaignId'] = kwargs['campaign_id']
+                else:
+                    data['campaignId'] = klass.campaign_id
+
+                if 'products' not in kwargs:
+                    raise ValueError(
+                        f'Invalid params, `products` is a required parameter.'
+                    )
+                if 'invoice_id' not in kwargs:
+                    raise ValueError(
+                        f'Invalid params, `invoice_id` is a required parameter.'
+                    )
+                else:
+                    data['invoiceId'] = kwargs['invoice_id']
+                amount = Decimal(0)
+                for item in kwargs['products']:
+                    for key in TBC_INSTALLMENT_ITEM_KEYS:
+                        if key not in item:
+                            raise ValueError(
+                                f'Invalid params, products item `{key}` is a '
+                                f'required parameter.'
+                            )
+                    amount += Decimal(item['price'])
+                data['products'] = kwargs['products']
+                data['priceTotal'] = str(amount.quantize(Decimal('.00')))
+
+                payload.update({'json': data})
+            elif api == 'confirm' or api == 'cancel' or api == 'status':
+                endpoint = endpoint.format(session_id=klass.session_id)
+
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/json'
+
+                if 'merchant_key' in kwargs:
+                    data['merchantKey'] = kwargs['merchant_key']
+                else:
+                    data['merchantKey'] = klass.merchant_key
+
+                payload.update({'json': data})
+            elif api == 'statuses':
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/json'
+
+                if 'merchant_key' in kwargs:
+                    data['merchantKey'] = kwargs['merchant_key']
+                else:
+                    data['merchantKey'] = klass.merchant_key
+
+                try:
+                    data['take'] = kwargs.get('take', 15)
+                except ValueError:
+                    raise ValueError(
+                        f'Invalid params, `take` must be integer.'
+                    )
+
+                payload.update({'json': data})
+            elif api == 'status-sync':
+                headers['accept'] = 'application/json'
+                headers['Content-Type'] = 'application/json'
+
+                if 'merchant_key' in kwargs:
+                    data['merchantKey'] = kwargs['merchant_key']
+                else:
+                    data['merchantKey'] = klass.merchant_key
+
+                if 'sync_request_id' in kwargs:
+                    data['synchronizationRequestId'] = kwargs['sync_request_id']
+
+                payload.update({'json': data})
+            else:
+                raise ValueError('Unsupported `api` type.')
+
+            if api != 'auth':
+                try:
+                    if 'access_token' not in kwargs:
+                        access_token = klass.auth.access_token
+                    else:
+                        access_token = kwargs['access_token']
+                except TypeError:
+                    raise ValueError(
+                        'Invalid params, `access_token` is a required parameter. '
+                        'Use authorization method `get_auth` or set `access_token` value.'
+                    )
+                headers['Authorization'] = f'Bearer {access_token}'
+
+            kwargs = {
+                'url': f'{klass.url}{endpoint}',
+                'headers': headers
+            }
+
+            return f(payload=payload, *args, **kwargs)
 
         return wrapped
 
@@ -260,37 +403,6 @@ def bog_params(**kw):
                 ]
                 payload.update({'json': data})
             elif api == 'installment-checkout':
-                """
-                {
-                  "intent": "LOAN",
-                  "installment_month": 6,
-                  "installment_type": "STANDARD",
-                  "shop_order_id": "123456",
-                  "success_redirect_url": "https://demo.ipay.ge/success",
-                  "fail_redirect_url": "https://demo.ipay.ge/fail",
-                  "reject_redirect_url": "https://demo.ipay.ge/reject",
-                  "validate_items": true,
-                  "locale": "ka",
-                  "purchase_units": [
-                    {
-                      "amount": {
-                        "currency_code": "GEL",
-                        "value": "500.00"
-                      }
-                    }
-                  ],
-                  "cart_items": [
-                    {
-                      "total_item_amount": "10.50",
-                      "item_description": "test_product",
-                      "total_item_qty": "1",
-                      "item_vendor_code": "123456",
-                      "product_image_url": "https://example.com/product.jpg",
-                      "item_site_detail_url": "https://example.com/product"
-                    }
-                  ]
-                }
-                """
                 error_message = (
                     'Invalid params, `{0}` is a required parameter. '
                     'Read api docs <https://api.bog.ge/docs/installment/create-order>.'
@@ -380,9 +492,7 @@ def bog_params(**kw):
                 headers['Content-Type'] = 'application/json'
                 endpoint = endpoint.format(order_id=kwargs['order_id'])
             else:
-                raise ValueError(
-                    'Unsupported `api` type.'
-                )
+                raise ValueError('Unsupported `api` type.')
 
             if api != 'auth':
                 try:
