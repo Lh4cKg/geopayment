@@ -23,9 +23,15 @@ $ pip install geopayment
 
 ### Modules
 
-   1. [For TBCPay](https://github.com/Lh4cKg/geopayment/blob/master/docs/tbc.md)
+   1. [For TBCPay](https://github.com/Lh4cKg/geopayment/blob/main/docs/tbc.md)
    
-   2. [For iPay (BOG)](https://github.com/Lh4cKg/geopayment/blob/master/docs/bog.md)
+   2. [For TBC Installment](https://github.com/Lh4cKg/geopayment/blob/main/docs/tbc_installment.md)
+
+   3. [For iPay (BOG)](https://github.com/Lh4cKg/geopayment/blob/main/docs/bog.md)
+
+   4. [For BOG Installment](https://github.com/Lh4cKg/geopayment/blob/main/docs/bog_installment.md)
+
+   5. [For Credo Installment](https://github.com/Lh4cKg/geopayment/blob/main/docs/credo_installment.md)
 
 
 ##### License
