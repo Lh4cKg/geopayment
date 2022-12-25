@@ -32,8 +32,6 @@ class BaseInstallmentProvider(object):
             '`secret` must be property, not callable'
         assert callable(self.service_url) is False, \
             '`service_url` must be property, not callable'
-        assert callable(self.version) is False, \
-            '`version` must be property, not callable'
 
     @property
     def merchant_key(self):
