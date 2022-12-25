@@ -2,7 +2,7 @@ from geopayment.providers import (
     CredoProvider,
     IPayProvider,
     TBCProvider,
-    TBCInstallmentProvider
+    TBCInstallmentProvider,
 )
 
-__version__ = '0.5.2'
+__version__ = "0.6.0"
