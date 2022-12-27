@@ -5,7 +5,7 @@ Created on Jul 14, 2017
 
 @author: Lasha Gogua
 """
-
+import datetime
 import json
 from decimal import Decimal, ROUND_UP
 from functools import wraps
@@ -88,6 +88,17 @@ def get_currency_code(code):
     return ALLOW_CURRENCY_CODES[code]
 
 
+class JsonEncoder(json.JSONEncoder):
+
+    def default(self, o):
+        if isinstance(o, datetime.datetime):
+            return o.isoformat()
+        if isinstance(o, Decimal):
+            return str(o)
+
+        return super().default(o)
+
+
 def perform_http_response(response: requests.Response):
     """
     :param response: Response object from HTTP Request
@@ -122,24 +133,29 @@ def _request(**kw):
             method = kwargs['method']
             request_params['url'] = kwargs.get('url', klass.service_url)
             request_params['method'] = method
-            request_params.update(kwargs['payload'])
+            payload = kwargs['payload']
+            if 'json' in payload:
+                payload['json'] = json.loads(
+                    json.dumps(payload.pop('json'), cls=JsonEncoder)
+                )
+            request_params.update(payload)
             request_params['headers'] = kwargs.get('headers')
-            request_params['verify'] = kwargs['verify']
-            request_params['timeout'] = kwargs['timeout']
+            request_params['verify'] = kwargs.get('verify', True)
+            request_params['timeout'] = kwargs.get('timeout', 4)
             request_params['cert'] = getattr(klass, 'cert', None)
             if method == 'get':
                 request_params['allow_redirects'] = True
 
             try:
                 resp = requests.request(**request_params)
-                kwargs['http_status_code'] = resp.status_code
+                kwargs['HTTP_STATUS_CODE'] = resp.status_code
                 result = perform_http_response(resp)
                 kwargs['headers'] = resp.headers
             except requests.exceptions.RequestException as e:
                 result = {'ERROR': str(e)}
                 kwargs['headers'] = dict()
-                if 'http_status_code' not in kwargs:
-                    kwargs['http_status_code'] = 'N/A'
+                if 'HTTP_STATUS_CODE' not in kwargs:
+                    kwargs['HTTP_STATUS_CODE'] = 'N/A'
 
             return f(result=result, *args, **kwargs)
 

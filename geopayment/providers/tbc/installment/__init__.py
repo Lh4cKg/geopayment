@@ -143,9 +143,9 @@ class TBCInstallmentProvider(BaseInstallmentProvider):
 
         """
 
-        self.http_status_code = kwargs['http_status_code']
+        self.http_status_code = kwargs['HTTP_STATUS_CODE']
         result = kwargs['result']
-        if 'fault' in result:
+        if 'fault' in result or 'error' in result:
             return result
         self.auth = AuthData(**result)
         return self.auth
@@ -189,7 +189,7 @@ class TBCInstallmentProvider(BaseInstallmentProvider):
 
         """
 
-        self.http_status_code = kwargs['http_status_code']
+        self.http_status_code = kwargs['HTTP_STATUS_CODE']
         self.session_id = kwargs['result'].get('sessionId')
         self.redirect_url = kwargs['headers'].get('location')
         if self.session_id and self.redirect_url:
@@ -224,7 +224,7 @@ class TBCInstallmentProvider(BaseInstallmentProvider):
 
         """
 
-        self.http_status_code = kwargs['http_status_code']
+        self.http_status_code = kwargs['HTTP_STATUS_CODE']
         return kwargs['result']
 
     @tbc_installment_params(
@@ -252,7 +252,7 @@ class TBCInstallmentProvider(BaseInstallmentProvider):
                             HTTP request has been successfully completed.
 
         """
-        self.http_status_code = kwargs['http_status_code']
+        self.http_status_code = kwargs['HTTP_STATUS_CODE']
         return kwargs['result']
 
     @tbc_installment_params(
@@ -290,7 +290,7 @@ class TBCInstallmentProvider(BaseInstallmentProvider):
                             HTTP request has been successfully completed.
 
         """
-        self.http_status_code = kwargs['http_status_code']
+        self.http_status_code = kwargs['HTTP_STATUS_CODE']
         return kwargs['result']
 
     @tbc_installment_params(
@@ -325,7 +325,7 @@ class TBCInstallmentProvider(BaseInstallmentProvider):
                             HTTP request has been successfully completed.
 
         """
-        self.http_status_code = kwargs['http_status_code']
+        self.http_status_code = kwargs['HTTP_STATUS_CODE']
         return kwargs['result']
 
     @tbc_installment_params(
@@ -352,5 +352,5 @@ class TBCInstallmentProvider(BaseInstallmentProvider):
                             HTTP request has been successfully completed.
 
         """
-        self.http_status_code = kwargs['http_status_code']
+        self.http_status_code = kwargs['HTTP_STATUS_CODE']
         return kwargs['result']
