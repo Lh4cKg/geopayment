@@ -245,6 +245,29 @@ class TBCProvider(BaseTBCProvider):
         """
         return kwargs['result']
 
+    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
+                'biller_client_id', 'expiry', 'perspayee_expiry', 'perspayee_gen',
+                command='d', language='ka', msg_type='DMS')
+    @_request(verify=False, timeout=(3, 10), method='post')
+    def pre_auth_card_register_with_deduction(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+        command: Transaction type
+        language: The language of the transaction performed
+        msg_type: Transaction authorization type
+
+        :param kwargs: Other operation parameters
+        :return: Transaction id from merchant response
+
+        >>> provider = MyTBCProvider()
+        >>> provider.pre_auth_card_register_with_deduction(amount=23.45, currency='GEL')
+        {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+
+        TRANSACTION_ID - transaction identifier
+        error          - in case of an error
+
+        """
+        return kwargs['result']
+
     @tbc_params('currency', 'client_ip_addr', 'description', 'biller_client_id',
                 'expiry', 'perspayee_expiry', 'perspayee_gen',
                 command='p', language='ka', msg_type='AUTH')
@@ -281,6 +304,34 @@ class TBCProvider(BaseTBCProvider):
 
         >>> provider = MyTBCProvider()
         >>> provider.recurring_payment(amount=23.6, currency='GEL')
+        {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
+
+        TRANSACTION_ID - transaction identifier
+        RESULT         - operation result
+        RESULT_CODE    - operation result code
+        RRN            - rrn
+        APPROVAL_CODE  - operation approval code
+        error          - in case of an error
+
+        """
+        result = kwargs['result']
+        if 'TRANSACTION_ID' in result:
+            self.trans_id = result['TRANSACTION_ID']
+        return result
+
+    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
+                'biller_client_id', command='f', language='ka')
+    @_request(verify=False, timeout=(3, 10), method='post')
+    def pre_auth_recurring_payment(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        """
+        command: Transaction type
+        language: The language of the transaction performed
+
+        :param kwargs: Other operation parameters
+        :return: Transaction id from merchant response
+
+        >>> provider = MyTBCProvider()
+        >>> provider.pre_auth_recurring_payment(amount=23.6, currency='GEL')
         {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
 
         TRANSACTION_ID - transaction identifier
