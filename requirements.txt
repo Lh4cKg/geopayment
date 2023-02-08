@@ -1,7 +1,7 @@
 certifi==2022.12.7
 cffi==1.15.0
 charset-normalizer==2.0.7
-cryptography==3.3.2
+cryptography==39.0.1
 idna==3.3
 pycparser==2.20
 pyOpenSSL==21.0.0
