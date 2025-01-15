@@ -1,13 +1,13 @@
 from typing import Optional, Any, Dict
 
 from geopayment.providers.bog.provider import IPayProvider
-from geopayment.providers.utils import _request, bog_params
+from geopayment.providers.utils import _request
 
 
 class IPayInstallmentProvider(IPayProvider):
     default_locale = 'ka'
 
-    @bog_params(currency_code='GEL', endpoint='installment/checkout', api='installment-checkout')
+    # @bog_params(currency_code='GEL', endpoint='installment/checkout', api='installment-checkout')
     @_request(verify=True, timeout=(3, 10), method='post')
     def checkout(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """
@@ -27,7 +27,7 @@ class IPayInstallmentProvider(IPayProvider):
                 self.rel_approve = link[0]['href']
         return result
 
-    @bog_params(currency_code='GEL', endpoint='services/installment/calculate', api='installment-calculate')
+    # @bog_params(currency_code='GEL', endpoint='services/installment/calculate', api='installment-calculate')
     @_request(verify=True, timeout=(3, 10), method='post')
     def calculate(self, **kwargs: Optional[Any]) -> Dict[str, str]:
         """

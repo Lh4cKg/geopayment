@@ -1,10 +1,3 @@
-# _*_ coding: utf-8 _*_
-
-"""
-Created on Jul 14, 2017
-
-@author: Lasha Gogua
-"""
 import datetime
 import json
 from decimal import Decimal, ROUND_UP
@@ -18,7 +11,6 @@ from geopayment.constants import (
     CURRENCY_SYMBOLS,
     ALLOW_CURRENCY_CODES,
     DEFAULT_PAYLOAD_ARGS,
-    BOG_ITEM_KEYS,
     BOG_INSTALLMENT_ITEM_KEYS,
     TBC_INSTALLMENT_ITEM_KEYS
 )
@@ -398,7 +390,7 @@ def bog_params(**kw):
                     )
                 amount = Decimal(0)
                 for item in kwargs['items']:
-                    for key in BOG_ITEM_KEYS:
+                    for key in ():
                         if key not in item:
                             raise ValueError(
                                 f'Invalid params, item `{key}` is a '

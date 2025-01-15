@@ -1,6 +1,7 @@
 from geopayment.providers import (
     CredoProvider,
     IPayProvider,
+    BogProvider,
     TBCProvider,
     TBCInstallmentProvider,
 )
