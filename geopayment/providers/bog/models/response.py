@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing as t
 from dataclasses import dataclass, field
+from decimal import Decimal
 
 from geopayment.providers.bog.models.base import BaseModel
 from geopayment.providers.bog.models.request import Amount
@@ -77,6 +78,7 @@ class CheckoutResponse(BaseModel):
             if link.rel == 'approve':
                 self.rel_approve = link.rel
             links.append(link)
+        self.links = links
 
 
 @dataclass
@@ -196,3 +198,31 @@ class SubscriptionResponse(BaseModel):
     status: t.Literal['success', 'error', 'in_progress']
     payment_hash: str
     order_id: str
+
+
+@dataclass
+class CalculateDiscount(BaseModel):
+    month: int
+    amount: str | Decimal
+    discount_code: t.Literal['ZERO', 'STANDARD']
+
+
+@dataclass
+class CalculateResponse(BaseModel):
+    discounts: t.List[CalculateDiscount | t.Dict[str, t.Any]]
+
+    def __post_init__(self):
+        discounts = []
+        for discount in self.discounts:
+            discounts.append(CalculateDiscount(**discount))
+        self.discounts = discounts
+
+
+@dataclass
+class InstallmentOrderResponse(BaseModel):
+    order_id: str
+    status: t.Literal['success', 'error', 'in_progress']
+    installment_status: t.Literal['success', 'reject', 'reverse_success', 'fail', 'unknown']
+    ipay_payment_id: str
+    shop_order_id: str
+    payment_method: str

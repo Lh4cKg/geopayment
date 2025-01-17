@@ -20,7 +20,7 @@ def dict_factory(result: dict) -> t.Dict[str, t.Any]:
 @dataclass
 class BaseModel:
 
-    config: t.ClassVar[t.Dict[str, t.Any]] = {
+    __config__: t.ClassVar[t.Dict[str, t.Any]] = {
         'validation': True
     }
 
@@ -31,11 +31,11 @@ class BaseModel:
 
     def to_json(self, dropna: bool = False) -> t.Dict[t.Any, t.Any] | str:
         if dropna:
-            return ujson.dumps(asdict(self, dict_factory=dict_factory))
-        return ujson.dumps(asdict(self))
+            return ujson.dumps(self.to_dict(dropna=dropna))
+        return ujson.dumps(self.to_dict())
 
     def __post_init__(self):
-        if self.config['validation']:
+        if self.__config__['validation']:
             # TODO type validation by annotations
             pass
 
