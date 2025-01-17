@@ -31,3 +31,20 @@ class CapturedMethod(enum.Enum):
 class Language(enum.Enum):
     KA: str = 'ka'
     EN_US: str = 'en-US'
+    EN: str = 'en'
+
+
+class ApplicationType(enum.Enum):
+    WEB: str = 'web'
+    MOBILE: str = 'mobile'
+
+
+class PaymentMethod(enum.Enum):
+    CARD: str = 'card'
+    GOOGLE_PAY: str = 'google_pay'
+    APPLE_PAY: str = 'apple_pay'
+    BOG_P2P: str = 'bog_p2p'
+    BOG_LOYALTY: str = 'bog_loyalty'
+    BNPL: str = 'bnpl'
+    BOG_LOAN: str = 'bog_loan'
+    GIFT_CARD: str = 'gift_card'
