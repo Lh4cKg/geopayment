@@ -8,7 +8,7 @@ from geopayment.enums import (
     Currency, AuthType, Language, CapturedMethod,
     Intent, PaymentMethod, ApplicationType
 )
-from geopayment.providers.bog.models.base import BaseModel
+from geopayment.providers.models import BaseModel
 
 
 @dataclass

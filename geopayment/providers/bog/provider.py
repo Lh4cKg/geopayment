@@ -7,7 +7,7 @@ import uuid
 from base64 import b64encode
 from decimal import Decimal
 
-from geopayment.providers.bog.models import ProviderConfig
+from geopayment.providers.bog.models import IPayConfig, BOGConfig
 from geopayment.providers.bog.models.request import (
     AuthData,
     CheckoutData,
@@ -47,19 +47,14 @@ class AbstractBogProvider:
             f'The `{self.__class__.__qualname__}.__config__` '
             f'must be property, not callable function'
         )
-        if not isinstance(self.__config__, (ProviderConfig, dict)):
+        if not isinstance(self.__config__, (IPayConfig, BOGConfig, dict)):
             raise TypeError(
                 f'The `{self.__class__.__qualname__}.__config__` '
                 f'must be type of `dict` or `ProviderConfig`'
             )
 
-        if isinstance(self.__config__, ProviderConfig):
-            self.config = self.__config__
-        else:
-            self.config = ProviderConfig(**self.__config__)
-
     @property
-    def __config__(self) -> ProviderConfig | t.Dict[str, t.Any]:
+    def __config__(self) -> IPayConfig | BOGConfig | t.Dict[str, t.Any]:
         raise NotImplementedError
 
     def get_api_url(self) -> str:
@@ -133,7 +128,15 @@ class AbstractBogProvider:
 
 class BaseIPayProvider(AbstractBogProvider):
 
-    # BOG APIs
+    def __init__(self) -> None:
+        super().__init__()
+
+        if isinstance(self.__config__, IPayConfig):
+            self.config = self.__config__
+        else:
+            self.config = IPayConfig(**self.__config__)
+
+    # IPay APIs
 
     @property
     def auth_api(self) -> str:
@@ -184,17 +187,59 @@ class BaseIPayProvider(AbstractBogProvider):
 
 class BaseBogProvider(AbstractBogProvider):
 
-    @property
-    def auth_api(self):
-        return self.config.auth_url
+    def __init__(self) -> None:
+        super().__init__()
+
+        if isinstance(self.__config__, BOGConfig):
+            self.config = self.__config__
+        else:
+            self.config = BOGConfig(**self.__config__)
+
+    # BOG APIs
 
     @property
-    def checkout_api(self):
+    def auth_api(self) -> str:
+        return self.config.auth_api
+
+    @property
+    def checkout_api(self) -> str:
         return f'{self.get_api_url()}/ecommerce/orders'
 
     @property
-    def refund_api(self):
-        pass
+    def order_api(self) -> str:
+        return f'{self.get_api_url()}/receipt/{{order_id}}'
+
+    @property
+    def pre_auth_approve_api(self) -> str:
+        return f'{self.get_api_url()}/payment/authorization/approve/{{order_id}}'
+
+    @property
+    def pre_auth_reject_api(self) -> str:
+        return f'{self.get_api_url()}/payment/authorization/cancel/{{order_id}}'
+
+    @property
+    def refund_api(self) -> str:
+        return f'{self.get_api_url()}/payment/refund/{{order_id}}'
+
+    @property
+    def add_card_api(self) -> str:
+        return f'{self.get_api_url()}/orders/{{order_id}}/cards'
+
+    @property
+    def subscription_card_api(self) -> str:
+        return f'{self.get_api_url()}/orders/{{order_id}}/subscriptions'
+
+    @property
+    def delete_card_api(self) -> str:
+        return f'{self.get_api_url()}/charges/card/{{order_id}}'
+
+    @property
+    def recurrent_payment_api(self) -> str:
+        return f'{self.get_api_url()}/ecommerce/orders/{{order_id}}'
+
+    @property
+    def subscribe_payment_api(self) -> str:
+        return f'{self.get_api_url()}/ecommerce/orders/{{order_id}}/subscribe'
 
 
 class BogProvider(BaseBogProvider):
@@ -296,11 +341,11 @@ class BogProvider(BaseBogProvider):
             capture_method=capture_method,
             redirect_url=redirect_url,
             show_shop_order_id_on_extract=show_shop_order_id_on_extract,
-        ).to_json(dropna=True)
+        ).to_dict(dropna=True)
         request = Request(
             'POST',
             self.checkout_api,
-            data=data,
+            json=data,
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -412,11 +457,11 @@ class IPayProvider(BaseIPayProvider):
             locale=locale,
             redirect_url=redirect_url,
             show_shop_order_id_on_extract=show_shop_order_id_on_extract,
-        ).to_json(dropna=True)
+        ).to_dict(dropna=True)
         request = Request(
             'POST',
             self.checkout_api,
-            data=data,
+            json=data,
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -757,11 +802,11 @@ class IPayProvider(BaseIPayProvider):
             fail_redirect_url=fail_redirect_url,
             reject_redirect_url=reject_redirect_url,
             validate_items=validate_items,
-        ).to_json(dropna=True)
+        ).to_dict(dropna=True)
         request = Request(
             'POST',
             self.installment_checkout_api,
-            data=data,
+            json=data,
             headers=self.headers,
             verify=verify,
             timeout=timeout,

@@ -4,7 +4,7 @@ import typing as t
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from geopayment.providers.bog.models.base import BaseModel
+from geopayment.providers.models import BaseModel
 from geopayment.providers.bog.models.request import Amount
 
 
