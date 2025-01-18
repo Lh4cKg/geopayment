@@ -23,6 +23,23 @@ $ pip install geopayment
 
 ### Modules For
 
+Latest Version
+
+   1. [TBCPay](https://github.com/Lh4cKg/geopayment/blob/main/docs/tbc.md)
+   
+   2. [TBC Installment](https://github.com/Lh4cKg/geopayment/blob/main/docs/tbc_installment.md)
+
+   3. [iPay (BOG Old Version API)](https://github.com/Lh4cKg/geopayment/blob/main/docs/bog.md)
+
+   4. [BOG Online Payment](https://github.com/Lh4cKg/geopayment/blob/main/docs/bog.md)
+
+   5. [BOG Installment](https://github.com/Lh4cKg/geopayment/blob/main/docs/bog_installment.md)
+
+   6. [Credo Installment](https://github.com/Lh4cKg/geopayment/blob/main/docs/credo_installment.md)
+
+
+Old Version
+
    1. [TBCPay](https://github.com/Lh4cKg/geopayment/blob/main/docs/tbc.md)
    
    2. [TBC Installment](https://github.com/Lh4cKg/geopayment/blob/main/docs/tbc_installment.md)
@@ -39,8 +56,3 @@ $ pip install geopayment
 Copyright &copy; 2017 Lasha Gogua.
 
 MIT licensed.
-
-# TODO 
-the bug inst.py local testing file is uploaded within packaged 
-version of geopayment
-Solution: this file must be add to setup.cfg file into the exclude section
