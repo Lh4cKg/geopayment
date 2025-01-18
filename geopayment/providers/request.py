@@ -39,7 +39,7 @@ class Request:
             *,
             params:  t.Dict[str, t.Any] | None = None,
             json: t.Dict[str, t.Any] | None = None,
-            data: t.Dict[str, t.Any] | None = None,
+            data: t.Dict[str, t.Any] | str | None = None,
             headers: Header = Header(),
             verify: bool = True,
             timeout: t.Tuple[int, int] = (3, 10),

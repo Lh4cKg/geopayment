@@ -1,11 +1,3 @@
-# _*_ coding: utf-8 _*_
-
-"""
-Created on Jul 14, 2017
-
-@author: Lasha Gogua
-"""
-
 from OpenSSL import crypto
 
 
