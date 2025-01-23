@@ -1,18 +1,12 @@
-from __future__ import annotations
-
 import typing as t
 from dataclasses import dataclass, field
 from decimal import Decimal, ROUND_UP
 
-from geopayment.enums import (
-    Currency, AuthType, Language, CapturedMethod,
-    Intent, PaymentMethod, ApplicationType
-)
-from geopayment.providers.models import BaseModel
+from geopayment.providers.models import ValidationModel
 
 
 @dataclass
-class AuthData(BaseModel):
+class AuthData(ValidationModel):
     grant_type: t.Literal['client_credentials'] = 'client_credentials'
 
     def __post_init__(self):
@@ -21,54 +15,28 @@ class AuthData(BaseModel):
 
 
 @dataclass
-class Item(BaseModel):
+class Item(ValidationModel):
     amount: Decimal
     description: str
     quantity: int
     product_id: str
 
-    def __post_init__(self):
-        self.amount = Decimal(self.amount).quantize(
-            Decimal('.00'), rounding=ROUND_UP
-        )
-        if not isinstance(self.description, str):
-            raise ValueError(
-                f"The `description` must be of type str"
-            )
-        if not isinstance(self.quantity, int):
-            raise ValueError(
-                f"The `quantity` must be of type integer"
-            )
-        if not isinstance(self.product_id, str):
-            raise ValueError(
-                f"The `product_id` must be of type integer or string"
-            )
-
 
 @dataclass
-class Amount(BaseModel):
+class Amount(ValidationModel):
     value: Decimal
-    currency_code: str
-
-    def __post_init__(self):
-        self.value = Decimal(self.value).quantize(
-            Decimal('.00'), rounding=ROUND_UP
-        )
+    currency_code: t.Literal['GEL', 'EUR', 'USD', 'GBP']
 
 
 @dataclass
-class PurchaseUnit(BaseModel):
+class PurchaseUnit(ValidationModel):
     amount: Amount | t.Dict[str, t.Any]
     # removed from bog apis
     industry_type: t.Literal['ECOMMERCE'] = 'ECOMMERCE'
 
-    def __post_init__(self):
-        if isinstance(self.amount, dict):
-            self.amount = Amount(**self.amount)
-
 
 @dataclass
-class CheckoutData(BaseModel):
+class CheckoutData(ValidationModel):
     redirect_url: str
     amount: Decimal | None = None
     items: t.List[Item | t.Dict[str, t.Any]] = field(default_factory=list)
@@ -81,37 +49,10 @@ class CheckoutData(BaseModel):
     show_shop_order_id_on_extract: bool = False
 
     def __post_init__(self):
-        try:
-            Intent(self.intent)
-        except ValueError:
-            raise ValueError('`intent` must be `AUTHORIZE` or `CAPTURE`')
-        try:
-            CapturedMethod(self.capture_method)
-        except ValueError:
-            raise ValueError('`capture_method` must be `AUTOMATIC` or `MANUAL`')
-        try:
-            Language(self.locale)
-        except ValueError:
-            raise ValueError('`locale` must be `ka` or `en-US`')
-        if self.currency_code not in Currency.allowed_currencies():
-            raise ValueError('The specified `currency_code` is not supported.')
-        if self.amount:
-            self.amount = Decimal(self.amount)
-        if not isinstance(self.items, list):
-            raise ValueError('The `items` must be of type list')
-        if not self.amount and not self.items:
-            raise ValueError('Either `amount` or `items` must be specified.')
-
+        super().__post_init__()
         amount = Decimal(0)
-        items = []
         for item in self.items:
-            # validate item attributes
-            item = Item(**item)
             amount += item.amount
-            items.append(item)
-
-        if items:
-            self.items = items
 
         amount = self.amount or amount
         self.purchase_units.append(
@@ -129,7 +70,7 @@ class CheckoutData(BaseModel):
 
 
 @dataclass
-class InstallmentCartItem(BaseModel):
+class InstallmentCartItem(ValidationModel):
     total_item_amount: Decimal
     item_description: str
     total_item_qty: int
@@ -137,15 +78,9 @@ class InstallmentCartItem(BaseModel):
     product_image_url: str | None = None
     item_site_detail_url: str | None = None
 
-    def __post_init__(self):
-        if self.total_item_amount:
-            self.total_item_amount = Decimal(
-                self.total_item_amount
-            ).quantize(Decimal('.00'), rounding=ROUND_UP)
-
 
 @dataclass
-class InstallmentCheckoutData(BaseModel):
+class InstallmentCheckoutData(ValidationModel):
     cart_items: t.List[InstallmentCartItem | t.Dict[str, t.Any]]
     shop_order_id: str
     success_redirect_url: str
@@ -161,28 +96,11 @@ class InstallmentCheckoutData(BaseModel):
     validate_items: bool = True
 
     def __post_init__(self):
-        if self.intent != 'LOAN':
-            raise ValueError('`intent` must be `AUTHORIZE` or `CAPTURE`')
-        try:
-            Language(self.locale)
-        except ValueError:
-            raise ValueError('`locale` must be `ka` or `en-US`')
-        if self.currency_code not in Currency.allowed_currencies():
-            raise ValueError('The specified `currency_code` is not supported.')
-        if self.amount:
-            self.amount = Decimal(self.amount).quantize(Decimal('.00'), rounding=ROUND_UP)
-        if not isinstance(self.cart_items, list):
-            raise ValueError('The `items` must be of type list')
+        super().__post_init__()
 
         amount = Decimal(0)
-        items = []
         for item in self.cart_items:
-            # validate item attributes
-            item = InstallmentCartItem(**item)
             amount += item.total_item_amount
-            items.append(item)
-
-        self.cart_items = items
 
         amount = self.amount or amount
         self.purchase_units.append(
@@ -200,31 +118,24 @@ class InstallmentCheckoutData(BaseModel):
 
 
 @dataclass
-class InstallmentCalculateData(BaseModel):
+class InstallmentCalculateData(ValidationModel):
     amount: Decimal
     client_id: str
 
-    def __post_init__(self):
-        self.amount = Decimal(self.amount).quantize(Decimal('.00'), rounding=ROUND_UP)
-
 
 @dataclass
-class InstallmentOrderData(BaseModel):
+class InstallmentOrderData(ValidationModel):
     order_id: str
 
 
 @dataclass
-class RefundData(BaseModel):
+class RefundData(ValidationModel):
     order_id: str
     amount: Decimal | None = None
 
-    def __post_init__(self):
-        if self.amount:
-            self.amount = Decimal(self.amount).quantize(Decimal('.00'), ROUND_UP)
-
 
 @dataclass
-class OrderData(BaseModel):
+class OrderData(ValidationModel):
     order_id: str
 
 
@@ -243,14 +154,6 @@ class PreAuthData(OrderData):
     auth_type: t.Literal['FULL_COMPLETE', 'PARTIAL_COMPLETE', 'CANCEL']
     amount: Decimal | None = None
 
-    def __post_init__(self):
-        if self.amount:
-            self.amount = Decimal(self.amount).quantize(Decimal('.00'), ROUND_UP)
-        try:
-            AuthType(self.auth_type)
-        except ValueError:
-            raise ValueError('The specified `auth_type` is not supported.')
-
 
 @dataclass
 class SubscriptionData(OrderData):
@@ -260,11 +163,6 @@ class SubscriptionData(OrderData):
     shop_order_id: str | None = None
     purchase_description: str | None = None
 
-    def __post_init__(self):
-        self.amount = Decimal(self.amount).quantize(Decimal('.00'), ROUND_UP)
-        if self.currency_code not in Currency.allowed_currencies():
-            raise ValueError('The specified `currency_code` is not supported.')
-
 
 ###################################
 #   BOG New Online Payment API    #
@@ -272,12 +170,13 @@ class SubscriptionData(OrderData):
 
 
 @dataclass
-class Buyer(BaseModel):
+class Buyer(ValidationModel):
     full_name: str
     masked_email: str | None = None
     masked_phone: str | None = None
 
     def __post_init__(self):
+        super().__post_init__()
         if self.masked_phone:
             self.masked_phone = f'{self.masked_phone[:2]}*****{self.masked_phone[-2:]}'
         if self.masked_email:
@@ -290,7 +189,7 @@ class Buyer(BaseModel):
 
 
 @dataclass
-class Basket(BaseModel):
+class Basket(ValidationModel):
     product_id: str
     quantity: int
     unit_price: Decimal
@@ -305,87 +204,57 @@ class Basket(BaseModel):
     product_discount_id: str | None = None
     description: str | None = None
 
-    def __post_init__(self):
-        self.unit_price = Decimal(self.unit_price).quantize(Decimal('.00'), ROUND_UP)
-        if self.unit_discount_price:
-            self.unit_discount_price = Decimal(
-                self.unit_discount_price
-            ).quantize(Decimal('.00'), ROUND_UP)
-        if self.total_price:
-            self.total_price = Decimal(
-                self.total_price
-            ).quantize(Decimal('.00'), ROUND_UP)
-
-
 
 @dataclass
-class Delivery(BaseModel):
+class Delivery(ValidationModel):
     amount: Decimal | None = None
 
-    def __post_init__(self):
-        if self.amount:
-            self.amount = Decimal(self.amount).quantize(Decimal('.00'), ROUND_UP)
-
 
 @dataclass
-class OrderPurchaseUnits(BaseModel):
+class OrderPurchaseUnits(ValidationModel):
     total_amount: Decimal
-    basket: t.List[Basket | t.Dict[str, t.Any]]
+    basket: list[Basket | t.Dict[str, t.Any]]
     total_discount_amount: Decimal | None = None
     currency: t.Literal['GEL', 'USD', 'EUR', 'GBP'] = 'GEL'
     delivery: Delivery | None = None
 
-    def __post_init__(self):
-        baskets = []
-        for basket in self.basket:
-            if isinstance(basket, dict):
-                baskets.append(Basket(**basket))
-            else:
-                baskets.append(basket)
-        self.basket = baskets
-        self.total_discount_amount = Decimal(
-            self.total_discount_amount
-        ).quantize(Decimal('.00'), ROUND_UP)
-        if self.currency not in Currency.allowed_currencies():
-            raise ValueError('The specified `currency` is not supported.')
-
 
 @dataclass
-class RedirectUrls(BaseModel):
+class RedirectUrls(ValidationModel):
     success: str
     fail: str
 
 
 @dataclass
-class Loan(BaseModel):
+class Loan(ValidationModel):
     type: str
     month: int
 
 
 @dataclass
-class Campaign(BaseModel):
+class Campaign(ValidationModel):
     card: t.Literal['visa', 'ms', 'solo']
     type: t.Literal['restrict', 'client_discount']
 
 
 @dataclass
-class GooglePay(BaseModel):
+class GooglePay(ValidationModel):
     google_pay_token: str
     external: bool = False
 
 
 @dataclass
-class ApplePay(BaseModel):
+class ApplePay(ValidationModel):
     external: bool = False
 
 
 @dataclass
-class Account(BaseModel):
+class Account(ValidationModel):
     tag: str
 
 
 @dataclass
-class Config(BaseModel):
+class Config(ValidationModel):
     loan: Loan | None = None
     campaign: Campaign | None = None
     google_pay: GooglePay | None = None
@@ -394,7 +263,7 @@ class Config(BaseModel):
 
 
 @dataclass
-class OrderCheckoutData(BaseModel):
+class OrderCheckoutData(ValidationModel):
     callback_url: str
     purchase_units: OrderPurchaseUnits
     application_type: t.Literal['web', 'mobile'] | None = None
@@ -408,23 +277,3 @@ class OrderCheckoutData(BaseModel):
         'bog_loyalty', 'bnpl', 'bog_loan', 'gift_card'
     ]] = 'card'
     config: Config | None = None
-
-    def __post_init__(self):
-        try:
-            ApplicationType(self.application_type)
-        except ValueError:
-            values = ' or '.join([
-                f'`{v._value_}`' for _,v in ApplicationType._member_map_.items()
-            ])
-            raise ValueError(
-                f'`application_type` must be {values}'
-            )
-        try:
-            PaymentMethod(self.payment_method)
-        except ValueError:
-            values = ' or '.join([
-                f'`{v._value_}`' for _,v in PaymentMethod._member_map_.items()
-            ])
-            raise ValueError(
-                f'`payment_method` must be {values}'
-            )
