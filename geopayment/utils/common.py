@@ -10,7 +10,18 @@ def verify_signature(
         request_body: str,
         public_key: str | None = None
 ):
-    # TODO
+    """
+    Callback Api docs: https://api.bog.ge/docs/payments/standard-process/callback
+
+    TODO needs implement
+
+    ხელმოწერა დაგენერირებულია callback-ის request body-ზე private key-ით
+    SHA256withRSA ალგორითმის გამოყენებით. იმისათვის, რომ ბიზნესი
+    დარწმუნდეს callback-ში გადმოცემული ინფორმაციის ვალიდურობაში,
+    request body-ისა და public key-ის დახმარებით უნდა დაავერიფიციროს ხელმოწერა.
+    ვერიფიკაცია უნდა მოხდეს payload-ის დესერიალიზაციამდე, იმისათვის რომ
+    request body-ის პარამეტრების თანმიმდევრობა დარჩეს უცვლელი.
+    """
     if public_key is None:
         public_key = """-----BEGIN PUBLIC KEY-----
             MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAu4RUyAw3+CdkS3ZNILQh
@@ -25,10 +36,7 @@ def verify_signature(
 
 
 def dict_factory(result: dict) -> t.Dict[str, t.Any]:
-    return {
-        k: v for k, v in result
-        if v is not None and v != {} and v != [] and v != ()
-    }
+    return {k: v for k, v in result if v or isinstance(v, bool)}
 
 
 def serialize_dict_factory(result: dict) -> t.Dict[str, t.Any]:
@@ -40,7 +48,7 @@ def serialize_dict_factory(result: dict) -> t.Dict[str, t.Any]:
 def dropna_serialize_dict_factory(result: dict) -> t.Dict[str, t.Any]:
     return {
         k: str(v) if isinstance(v, Decimal) else v for k, v in result
-        if v is not None and v != {} and v != [] and v != ()
+        if v or isinstance(v, bool)
     }
 
 
