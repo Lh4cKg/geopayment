@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import typing as t
+import uuid
 from dataclasses import dataclass, field
+from datetime import datetime
 from decimal import Decimal
 
-from geopayment.providers.models import BaseModel
+from geopayment.providers.models import BaseModel, ValidationModel
 from geopayment.providers.bog.models.request import Amount
 
 
@@ -201,7 +203,7 @@ class SubscriptionResponse(BaseModel):
 
 
 @dataclass
-class CalculateDiscount(BaseModel):
+class CalculateDiscount:
     month: int
     amount: str | Decimal
     discount_code: t.Literal['ZERO', 'STANDARD']
@@ -226,3 +228,149 @@ class InstallmentOrderResponse(BaseModel):
     ipay_payment_id: str
     shop_order_id: str
     payment_method: str
+
+
+# Bog API
+
+@dataclass
+class _Links:
+    details: dict[str, t.Any]
+    redirect: dict[str, t.Any]
+
+
+@dataclass
+class OrderCheckoutResponse(BaseModel):
+    id: str
+    _links: _Links | dict[str, t.Any]
+    details: str | None = None
+    redirect: str | None = None
+
+    def __post_init__(self):
+        if isinstance(self._links, dict):
+            self._links = _Links(**self._links)
+        self.details = self._links.details['href']
+        self.redirect = self._links.redirect['href']
+
+
+@dataclass
+class OrderPaymentClient(BaseModel):
+    id: str
+    brand_ka: str
+    brand_en: str
+    url: str
+
+@dataclass
+class OrderPaymentStatus(BaseModel):
+    key: t.Literal[
+        'created', 'processing', 'completed', 'rejected', 'refund_requested',
+        'refunded', 'refunded_partially', 'auth_requested', 'blocked',
+        'partial_completed'
+    ]
+    value: str
+
+
+@dataclass
+class OrderPaymentBuyer(BaseModel):
+    full_name: str
+    email: str
+    phone_number: str
+
+
+@dataclass
+class OrderPaymentPurchaseItem(ValidationModel):
+    external_item_id: str
+    description: str
+    quantity: int
+    unit_price: Decimal
+    unit_discount_price: Decimal
+    vat: Decimal
+    vat_percent: Decimal
+    total_price: Decimal
+    package_code: str
+    tin: str | None
+    pinfl: str | None
+    product_discount_id: str | None
+
+
+@dataclass
+class OrderPaymentPurchaseUnit(ValidationModel):
+    request_amount: Decimal
+    transfer_amount: Decimal
+    refund_amount: Decimal
+    currency_code: t.Literal['GEL', 'USD', 'EUR']
+    items: list[OrderPaymentPurchaseItem]
+
+
+@dataclass
+class OrderPaymentRedirectLinks(BaseModel):
+    fail: str
+    success: str
+
+
+@dataclass
+class OrderPaymentTransferMethod(BaseModel):
+    key: t.Literal['card', 'google_pay', 'apple_pay', 'bog_p2p', 'bog_loyalty', 'bnpl', 'bog_loan']
+    value: str
+
+
+@dataclass
+class OrderPaymentDetail(ValidationModel):
+    transfer_method: OrderPaymentTransferMethod
+    code: str
+    code_description: str
+    transaction_id: str
+    payer_identifier: str
+    payment_option: t.Literal['direct_debit', 'recurrent', 'subscription']
+    card_type: t.Literal['amex', 'mc', 'visa']
+    card_expiry_date: str
+    request_account_tag: str
+    transfer_account_tag: str
+    saved_card_type: t.Literal['recurrent', 'subscription']
+    parent_order_id: str
+
+
+@dataclass
+class OrderPaymentDiscount(ValidationModel):
+    bank_discount_amount: Decimal
+    bank_discount_desc: str
+    discounted_amount: Decimal
+    original_order_amount: Decimal
+    system_discount_amount: Decimal
+    system_discount_desc: str
+
+
+@dataclass
+class OrderPaymentAction(ValidationModel):
+    action_id: str
+    request_channel: t.Literal['public_api', 'business_manager', 'support']
+    action: t.Literal['authorize', 'partial_authorize', 'cancel_authorize', 'refund', 'partial_refund']
+    status: t.Literal['completed', 'rejected']
+    zoned_action_date: str
+    amount: Decimal
+
+
+@dataclass
+class OrderPaymentDetailsResponse(ValidationModel):
+    order_id: uuid.UUID | str
+    industry: str
+    capture: t.Literal['manual', 'automatic']
+    external_order_id: str
+    client: OrderPaymentClient
+    zoned_create_date: datetime
+    zoned_expire_date: datetime
+    order_status: OrderPaymentStatus
+    buyer: OrderPaymentBuyer
+    purchase_units: OrderPaymentPurchaseUnit
+    redirect_links: OrderPaymentRedirectLinks
+    payment_detail: OrderPaymentDetail
+    discount: OrderPaymentDiscount
+    actions: list[OrderPaymentAction]
+    lang: t.Literal['ka', 'en']
+    reject_reason: str | None
+
+
+@dataclass
+class BogRefundResponse(BaseModel):
+    key: str
+    message: str
+    action_id: str

@@ -30,7 +30,7 @@ class Amount(ValidationModel):
 
 @dataclass
 class PurchaseUnit(ValidationModel):
-    amount: Amount | t.Dict[str, t.Any]
+    amount: Amount | dict[str, t.Any]
     # removed from bog apis
     industry_type: t.Literal['ECOMMERCE'] = 'ECOMMERCE'
 
@@ -39,12 +39,12 @@ class PurchaseUnit(ValidationModel):
 class CheckoutData(ValidationModel):
     redirect_url: str
     amount: Decimal | None = None
-    items: t.List[Item | t.Dict[str, t.Any]] = field(default_factory=list)
+    items: list[Item | dict[str, t.Any]] = field(default_factory=list)
     intent: t.Literal['AUTHORIZE', 'CAPTURE'] = 'AUTHORIZE'
     locale: t.Literal['ka', 'en-US'] = 'ka'
     shop_order_id: str | None = None
     currency_code: t.Literal['GEL', 'EUR', 'USD', 'GBP'] = 'GEL'
-    purchase_units: t.List[PurchaseUnit | t.Dict[str, t.Any]] = field(default_factory=list)
+    purchase_units: list[PurchaseUnit | dict[str, t.Any]] = field(default_factory=list)
     capture_method: t.Literal['AUTOMATIC', 'MANUAL'] = 'AUTOMATIC'
     show_shop_order_id_on_extract: bool = False
 
@@ -81,7 +81,7 @@ class InstallmentCartItem(ValidationModel):
 
 @dataclass
 class InstallmentCheckoutData(ValidationModel):
-    cart_items: t.List[InstallmentCartItem | t.Dict[str, t.Any]]
+    cart_items: list[InstallmentCartItem | dict[str, t.Any]]
     shop_order_id: str
     success_redirect_url: str
     fail_redirect_url: str
@@ -92,7 +92,7 @@ class InstallmentCheckoutData(ValidationModel):
     intent: t.Literal['LOAN'] = 'LOAN'
     locale: t.Literal['ka', 'en-US'] = 'ka'
     currency_code: t.Literal['GEL', 'EUR', 'USD', 'GBP'] = 'GEL'
-    purchase_units: t.List[PurchaseUnit | t.Dict[str, t.Any]] = field(default_factory=list)
+    purchase_units: list[PurchaseUnit | dict[str, t.Any]] = field(default_factory=list)
     validate_items: bool = True
 
     def __post_init__(self):
@@ -207,13 +207,13 @@ class Basket(ValidationModel):
 
 @dataclass
 class Delivery(ValidationModel):
-    amount: Decimal | None = None
+    amount: Decimal
 
 
 @dataclass
 class OrderPurchaseUnits(ValidationModel):
     total_amount: Decimal
-    basket: list[Basket | t.Dict[str, t.Any]]
+    basket: list[Basket | dict[str, t.Any]]
     total_discount_amount: Decimal | None = None
     currency: t.Literal['GEL', 'USD', 'EUR', 'GBP'] = 'GEL'
     delivery: Delivery | None = None
@@ -267,13 +267,18 @@ class OrderCheckoutData(ValidationModel):
     callback_url: str
     purchase_units: OrderPurchaseUnits
     application_type: t.Literal['web', 'mobile'] | None = None
-    buyer: Buyer | None = None
-    redirect_urls: RedirectUrls | None = None
+    buyer: Buyer | dict[str, str] | None = None
+    redirect_urls: RedirectUrls | dict[str, str] | None = None
     external_order_id: str | None = None
     capture: t.Literal['automatic', 'manual'] = 'automatic'
-    ttl: int = 1440
-    payment_method: t.List[t.Literal[
+    ttl: int = 15
+    payment_method: list[t.Literal[
         'card', 'google_pay', 'apple_pay', 'bog_p2p',
         'bog_loyalty', 'bnpl', 'bog_loan', 'gift_card'
     ]] = 'card'
-    config: Config | None = None
+    config: Config | dict[str, t.Any] | None = None
+
+
+@dataclass
+class OrderRefundData(ValidationModel):
+    amount: Decimal | None

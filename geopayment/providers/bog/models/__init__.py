@@ -1,5 +1,5 @@
-from .base import IPayConfig, BOGConfig
-from .request import (
+from geopayment.providers.bog.models.base import IPayConfig, BOGConfig
+from geopayment.providers.bog.models.request import (
     AuthData,
     Item,
     Amount,
