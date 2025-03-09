@@ -282,3 +282,15 @@ class OrderCheckoutData(ValidationModel):
 @dataclass
 class OrderRefundData(ValidationModel):
     amount: Decimal | None
+
+
+@dataclass
+class SubscribePaymentData(ValidationModel):
+    callback_url: str | None = None
+    external_order_id: str | None = None
+
+
+@dataclass
+class PreAuthPaymentData(ValidationModel):
+    amount: Decimal | None = None
+    description: str | None = None

@@ -374,3 +374,40 @@ class BogRefundResponse(BaseModel):
     key: str
     message: str
     action_id: str
+
+
+@dataclass
+class BogPreAuthResponse(BogRefundResponse):
+    pass
+
+
+@dataclass
+class RecurrentResponse(BaseModel):
+    http_status: int
+    message: str | None = None
+
+
+@dataclass
+class Link(BaseModel):
+    href: str
+
+@dataclass
+class CheckoutPaymentLinks(BaseModel):
+    details: Link | dict
+    redirect: Link | dict
+
+    def __post_init__(self):
+        self.details = Link(**self.details)
+
+
+@dataclass
+class CheckoutPaymentResponse(BaseModel):
+    id: str
+    _links: CheckoutPaymentLinks | dict
+    details: str | None = None
+    redirect: str | None = None
+
+    def __post_init__(self):
+        self._links = CheckoutPaymentLinks(**self._links)
+        self.details = self._links.details.href
+        self.redirect = self._links.redirect.href
