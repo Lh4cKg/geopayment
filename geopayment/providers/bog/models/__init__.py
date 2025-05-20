@@ -1,14 +1,16 @@
-from geopayment.providers.bog.models.base import IPayConfig, BOGConfig
+from geopayment.providers.bog.models.config import IPayConfig, BOGConfig
+from geopayment.providers.bog.models.installment import (
+    InstallmentCartItem,
+    InstallmentCheckoutData,
+    InstallmentCalculateData,
+    InstallmentOrderData,
+)
 from geopayment.providers.bog.models.request import (
     AuthData,
     Item,
     Amount,
     PurchaseUnit,
     CheckoutData,
-    InstallmentCartItem,
-    InstallmentCheckoutData,
-    InstallmentCalculateData,
-    InstallmentOrderData,
     RefundData,
     OrderData,
     OrderStatusData,

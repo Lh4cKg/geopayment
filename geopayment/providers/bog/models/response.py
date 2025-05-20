@@ -2,23 +2,23 @@ from __future__ import annotations
 
 import typing as t
 import uuid
-from dataclasses import dataclass, field
+from pydantic import Field
+from pydantic.dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
 
-from geopayment.providers.models import BaseModel, ValidationModel
 from geopayment.providers.bog.models.request import Amount
 
 
 @dataclass
-class SuccessResponse(BaseModel):
+class SuccessResponse:
     status_code: int
     text: str | None = None
     success: str = 'Ok'
 
 
 @dataclass
-class ErrorResponseResult(BaseModel):
+class ErrorResponseResult:
     error_code: int
     error_message: str
     information_link: str | None = None
@@ -47,7 +47,7 @@ class ErrorResponse:
 
 
 @dataclass
-class AuthResponse(BaseModel):
+class AuthResponse:
     access_token: str
     token_type: str
     expires_in: int
@@ -59,18 +59,18 @@ class AuthResponse(BaseModel):
 
 
 @dataclass
-class CheckoutLink(BaseModel):
+class CheckoutLink:
     href: str
     rel: str
     method: str
 
 
 @dataclass
-class CheckoutResponse(BaseModel):
+class CheckoutResponse:
     status: str
     payment_hash: str
     order_id: str
-    links: t.List[CheckoutLink | t.Dict[str, str]] = field(default_factory=list)
+    links: t.List[CheckoutLink | t.Dict[str, str]] = Field(default_factory=list)
     rel_approve: str | None = None
 
     def __post_init__(self):
@@ -118,7 +118,7 @@ class Capture:
 
 @dataclass
 class Payment:
-    captures: t.List[Capture] = field(default_factory=list)
+    captures: t.List[Capture] = Field(default_factory=list)
 
     def __post_init__(self):
         captures = []
@@ -134,7 +134,7 @@ class Payment:
 class PurchaseUnit:
     amount: Amount
     payee: Payee
-    payments: t.List[Payment] = field(default_factory=list)
+    payments: t.List[Payment] = Field(default_factory=list)
     shop_order_id: str | None = None
 
     def __post_init__(self):
@@ -152,7 +152,7 @@ class PurchaseUnit:
 
 
 @dataclass
-class OrderResponse(BaseModel):
+class OrderResponse:
     id: str
     status: str
     intent: str
@@ -160,7 +160,7 @@ class OrderResponse(BaseModel):
     payer: Payer
     createTime: str | None = None
     updateTime: str | None = None
-    errorHistory: t.List = field(default_factory=list)
+    errorHistory: t.List = Field(default_factory=list)
 
     def __post_init__(self):
         if isinstance(self.purchaseUnit, dict):
@@ -170,12 +170,12 @@ class OrderResponse(BaseModel):
 
 
 @dataclass
-class OrderStatusResponse(BaseModel):
+class OrderStatusResponse:
     status: str
 
 
 @dataclass
-class OrderPaymentResponse(BaseModel):
+class OrderPaymentResponse:
     status: t.Literal['success', 'error', 'in_progress']
     order_id: str
     payment_hash: str
@@ -190,13 +190,13 @@ class OrderPaymentResponse(BaseModel):
 
 
 @dataclass
-class PreAuthResponse(BaseModel):
+class PreAuthResponse:
     status: t.Literal['success', 'error', 'in_progress']
     description: str
 
 
 @dataclass
-class SubscriptionResponse(BaseModel):
+class SubscriptionResponse:
     status: t.Literal['success', 'error', 'in_progress']
     payment_hash: str
     order_id: str
@@ -210,7 +210,7 @@ class CalculateDiscount:
 
 
 @dataclass
-class CalculateResponse(BaseModel):
+class CalculateResponse:
     discounts: t.List[CalculateDiscount | t.Dict[str, t.Any]]
 
     def __post_init__(self):
@@ -221,7 +221,7 @@ class CalculateResponse(BaseModel):
 
 
 @dataclass
-class InstallmentOrderResponse(BaseModel):
+class InstallmentOrderResponse:
     order_id: str
     status: t.Literal['success', 'error', 'in_progress']
     installment_status: t.Literal['success', 'reject', 'reverse_success', 'fail', 'unknown']
@@ -239,7 +239,7 @@ class _Links:
 
 
 @dataclass
-class OrderCheckoutResponse(BaseModel):
+class OrderCheckoutResponse:
     id: str
     _links: _Links | dict[str, t.Any]
     details: str | None = None
@@ -253,14 +253,14 @@ class OrderCheckoutResponse(BaseModel):
 
 
 @dataclass
-class OrderPaymentClient(BaseModel):
+class OrderPaymentClient:
     id: str
     brand_ka: str
     brand_en: str
     url: str
 
 @dataclass
-class OrderPaymentStatus(BaseModel):
+class OrderPaymentStatus:
     key: t.Literal[
         'created', 'processing', 'completed', 'rejected', 'refund_requested',
         'refunded', 'refunded_partially', 'auth_requested', 'blocked',
@@ -270,14 +270,14 @@ class OrderPaymentStatus(BaseModel):
 
 
 @dataclass
-class OrderPaymentBuyer(BaseModel):
+class OrderPaymentBuyer:
     full_name: str
     email: str
     phone_number: str
 
 
 @dataclass
-class OrderPaymentPurchaseItem(ValidationModel):
+class OrderPaymentPurchaseItem:
     external_item_id: str
     description: str
     quantity: int
@@ -287,13 +287,13 @@ class OrderPaymentPurchaseItem(ValidationModel):
     vat_percent: Decimal
     total_price: Decimal
     package_code: str
-    tin: str | None
-    pinfl: str | None
-    product_discount_id: str | None
+    tin: str | None = None
+    pinfl: str | None = None
+    product_discount_id: str | None = None
 
 
 @dataclass
-class OrderPaymentPurchaseUnit(ValidationModel):
+class OrderPaymentPurchaseUnit:
     request_amount: Decimal
     transfer_amount: Decimal
     refund_amount: Decimal
@@ -302,19 +302,19 @@ class OrderPaymentPurchaseUnit(ValidationModel):
 
 
 @dataclass
-class OrderPaymentRedirectLinks(BaseModel):
+class OrderPaymentRedirectLinks:
     fail: str
     success: str
 
 
 @dataclass
-class OrderPaymentTransferMethod(BaseModel):
+class OrderPaymentTransferMethod:
     key: t.Literal['card', 'google_pay', 'apple_pay', 'bog_p2p', 'bog_loyalty', 'bnpl', 'bog_loan']
     value: str
 
 
 @dataclass
-class OrderPaymentDetail(ValidationModel):
+class OrderPaymentDetail:
     transfer_method: OrderPaymentTransferMethod
     code: str
     code_description: str
@@ -330,7 +330,7 @@ class OrderPaymentDetail(ValidationModel):
 
 
 @dataclass
-class OrderPaymentDiscount(ValidationModel):
+class OrderPaymentDiscount:
     bank_discount_amount: Decimal
     bank_discount_desc: str
     discounted_amount: Decimal
@@ -340,7 +340,7 @@ class OrderPaymentDiscount(ValidationModel):
 
 
 @dataclass
-class OrderPaymentAction(ValidationModel):
+class OrderPaymentAction:
     action_id: str
     request_channel: t.Literal['public_api', 'business_manager', 'support']
     action: t.Literal['authorize', 'partial_authorize', 'cancel_authorize', 'refund', 'partial_refund']
@@ -350,7 +350,7 @@ class OrderPaymentAction(ValidationModel):
 
 
 @dataclass
-class OrderPaymentDetailsResponse(ValidationModel):
+class OrderPaymentDetailsResponse:
     order_id: uuid.UUID | str
     industry: str
     capture: t.Literal['manual', 'automatic']
@@ -370,7 +370,7 @@ class OrderPaymentDetailsResponse(ValidationModel):
 
 
 @dataclass
-class BogRefundResponse(BaseModel):
+class BogRefundResponse:
     key: str
     message: str
     action_id: str
@@ -382,17 +382,17 @@ class BogPreAuthResponse(BogRefundResponse):
 
 
 @dataclass
-class RecurrentResponse(BaseModel):
+class RecurrentResponse:
     http_status: int
     message: str | None = None
 
 
 @dataclass
-class Link(BaseModel):
+class Link:
     href: str
 
 @dataclass
-class CheckoutPaymentLinks(BaseModel):
+class CheckoutPaymentLinks:
     details: Link | dict
     redirect: Link | dict
 
@@ -401,7 +401,7 @@ class CheckoutPaymentLinks(BaseModel):
 
 
 @dataclass
-class CheckoutPaymentResponse(BaseModel):
+class CheckoutPaymentResponse:
     id: str
     _links: CheckoutPaymentLinks | dict
     details: str | None = None

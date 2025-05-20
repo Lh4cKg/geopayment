@@ -5,7 +5,12 @@ import uuid
 from base64 import b64encode
 from decimal import Decimal
 
-from geopayment.providers.bog.models import IPayConfig, BOGConfig
+from geopayment.providers.bog.models.config import IPayConfig, BOGConfig
+from geopayment.providers.bog.models.installment import (
+    InstallmentCheckoutData,
+    InstallmentCalculateData,
+    InstallmentOrderData,
+)
 from geopayment.providers.bog.models.request import (
     AuthData,
     CheckoutData,
@@ -15,9 +20,6 @@ from geopayment.providers.bog.models.request import (
     OrderPaymentStatusData,
     PreAuthData,
     SubscriptionData,
-    InstallmentCheckoutData,
-    InstallmentCalculateData,
-    InstallmentOrderData,
     OrderCheckoutData,
     OrderPurchaseUnits,
     Basket,
@@ -43,6 +45,7 @@ from geopayment.providers.bog.models.response import (
     CheckoutPaymentResponse, BogPreAuthResponse
 )
 from geopayment.providers.request import Request, Header
+from geopayment.utils.common import to_dict, to_json
 
 
 __all__ = ['IPayProvider', 'BogProvider']
@@ -285,7 +288,7 @@ class BogProvider(BaseBogProvider):
         request = Request(
             'POST',
             self.config.auth_api,
-            data=AuthData().to_dict(),
+            data=to_dict(AuthData()),
             headers=self.auth_headers,
             verify=verify,
             timeout=timeout,
@@ -394,18 +397,21 @@ class BogProvider(BaseBogProvider):
             currency=currency,
             delivery=delivery
         )
-        data = OrderCheckoutData(
-            purchase_units=purchase_units,
-            application_type=application_type,
-            buyer=buyer,
-            config=config,
-            capture=capture,
-            redirect_urls=redirect_urls,
-            callback_url=callback_url,
-            external_order_id=external_order_id,
-            ttl=ttl,
-            payment_method=payment_method,
-        ).to_dict(dropna=True)
+        data = to_dict(
+            OrderCheckoutData(
+                purchase_units=purchase_units,
+                application_type=application_type,
+                buyer=buyer,
+                config=config,
+                capture=capture,
+                redirect_urls=redirect_urls,
+                callback_url=callback_url,
+                external_order_id=external_order_id,
+                ttl=ttl,
+                payment_method=payment_method,
+            ),
+            dropna=True
+        )
         request = Request(
             'POST',
             self.checkout_api,
@@ -452,7 +458,7 @@ class BogProvider(BaseBogProvider):
         request = Request(
             'GET',
             self.order_api.format(order_id=order_id),
-            json=OrderData(order_id=order_id).to_dict(),
+            json=to_dict(OrderData(order_id=order_id)),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -489,7 +495,7 @@ class BogProvider(BaseBogProvider):
         request = Request(
             'GET',
             self.order_payment_api.format(order_id=order_id),
-            json=OrderPaymentStatusData(order_id=order_id).to_dict(),
+            json=to_dict(OrderPaymentStatusData(order_id=order_id)),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -737,7 +743,7 @@ class BogProvider(BaseBogProvider):
             currency=currency,
             delivery=delivery
         )
-        data = OrderCheckoutData(
+        data = to_dict(OrderCheckoutData(
             purchase_units=purchase_units,
             application_type=application_type,
             buyer=buyer,
@@ -748,7 +754,7 @@ class BogProvider(BaseBogProvider):
             external_order_id=external_order_id,
             ttl=ttl,
             payment_method=payment_method,
-        ).to_dict(dropna=True)
+        ), dropna=True)
         request = Request(
             'POST',
             self.recurrent_payment_api.format(parent_order_id=parent_order_id),
@@ -809,10 +815,10 @@ class BogProvider(BaseBogProvider):
         request = Request(
             'POST',
             self.subscribe_payment_api.format(parent_order_id=parent_order_id),
-            json=SubscribePaymentData(
+            json=to_dict(SubscribePaymentData(
                 callback_url=callback_url,
                 external_order_id=external_order_id,
-            ).to_dict(dropna=True),
+            ), dropna=True),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -852,10 +858,10 @@ class BogProvider(BaseBogProvider):
         request = Request(
             'POST',
             self.pre_auth_approve_api.format(order_id=order_id),
-            json=PreAuthPaymentData(
+            json=to_dict(PreAuthPaymentData(
                 amount=amount,
                 description=description,
-            ).to_dict(dropna=True),
+            ), dropna=True),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -893,9 +899,9 @@ class BogProvider(BaseBogProvider):
         request = Request(
             'POST',
             self.pre_auth_reject_api.format(order_id=order_id),
-            json=PreAuthPaymentData(
+            json=to_dict(PreAuthPaymentData(
                 description=description,
-            ).to_dict(dropna=True),
+            ), dropna=True),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -937,7 +943,7 @@ class BogProvider(BaseBogProvider):
         request = Request(
             'GET',
             self.refund_api.format(order_id=order_id),
-            json=OrderRefundData(amount=amount).to_dict(dropna=True),
+            json=to_dict(OrderRefundData(amount=amount), dropna=True),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -973,7 +979,7 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'POST',
             self.auth_api,
-            data=AuthData().to_dict(),
+            data=to_dict(AuthData()),
             headers=self.auth_headers,
             verify=verify,
             timeout=timeout,
@@ -1034,16 +1040,19 @@ class IPayProvider(BaseIPayProvider):
         """
         if redirect_url is None:
             redirect_url = self.config.redirect_url
-        data = CheckoutData(
-            amount=amount,
-            items=items,
-            currency_code=currency_code,
-            intent=intent,
-            capture_method=capture_method,
-            locale=locale,
-            redirect_url=redirect_url,
-            show_shop_order_id_on_extract=show_shop_order_id_on_extract,
-        ).to_dict(dropna=True)
+        data = to_dict(
+            CheckoutData(
+                amount=amount,
+                items=items,
+                currency_code=currency_code,
+                intent=intent,
+                capture_method=capture_method,
+                locale=locale,
+                redirect_url=redirect_url,
+                show_shop_order_id_on_extract=show_shop_order_id_on_extract,
+            ),
+            dropna=True
+        )
         request = Request(
             'POST',
             self.checkout_api,
@@ -1087,10 +1096,10 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'POST',
             self.checkout_api,
-            json=RefundData(
+            json=to_dict(RefundData(
                 order_id=order_id,
                 amount=amount
-            ).to_dict(dropna=True),
+            ), dropna=True),
             headers=self.headers_form_urlencoded,
             verify=verify,
             timeout=timeout,
@@ -1130,7 +1139,7 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'GET',
             self.order_status_api.format(order_id=order_id),
-            json=OrderStatusData(order_id=order_id).to_dict(),
+            json=to_dict(OrderStatusData(order_id=order_id)),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -1167,7 +1176,7 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'GET',
             self.order_api.format(order_id=order_id),
-            json=OrderData(order_id=order_id).to_dict(),
+            json=to_dict(OrderData(order_id=order_id)),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -1204,7 +1213,7 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'GET',
             self.payment_api.format(order_id=order_id),
-            json=OrderPaymentStatusData(order_id=order_id).to_dict(),
+            json=to_dict(OrderPaymentStatusData(order_id=order_id)),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -1248,11 +1257,11 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'POST',
             self.pre_auth_api.format(order_id=order_id),
-            json=PreAuthData(
+            json=to_dict(PreAuthData(
                 order_id=order_id,
                 auth_type=auth_type,
                 amount=amount,
-            ).to_dict(dropna=True),
+            ), dropna=True),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -1300,13 +1309,13 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'POST',
             self.pre_auth_api.format(order_id=order_id),
-            json=SubscriptionData(
+            json=to_dict(SubscriptionData(
                 order_id=order_id,
                 amount=amount,
                 currency_code=currency_code,
                 shop_order_id=shop_order_id,
                 purchase_description=purchase_description,
-            ).to_dict(dropna=True),
+            ), dropna=True),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -1376,19 +1385,22 @@ class IPayProvider(BaseIPayProvider):
         :return: CheckoutResponse
         """
 
-        data = InstallmentCheckoutData(
-            installment_month=installment_month,
-            installment_type=installment_type,
-            shop_order_id=shop_order_id,
-            amount=amount,
-            cart_items=cart_items,
-            currency_code=currency_code,
-            locale=locale,
-            success_redirect_url=success_redirect_url,
-            fail_redirect_url=fail_redirect_url,
-            reject_redirect_url=reject_redirect_url,
-            validate_items=validate_items,
-        ).to_dict(dropna=True)
+        data = to_dict(
+            InstallmentCheckoutData(
+                installment_month=installment_month,
+                installment_type=installment_type,
+                shop_order_id=shop_order_id,
+                amount=amount,
+                cart_items=cart_items,
+                currency_code=currency_code,
+                locale=locale,
+                success_redirect_url=success_redirect_url,
+                fail_redirect_url=fail_redirect_url,
+                reject_redirect_url=reject_redirect_url,
+                validate_items=validate_items,
+            ),
+            dropna=True
+        )
         request = Request(
             'POST',
             self.installment_checkout_api,
@@ -1422,10 +1434,10 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'POST',
             self.installment_calculate_api,
-            json=InstallmentCalculateData(
+            json=to_dict(InstallmentCalculateData(
                 amount=amount,
                 client_id=self.config.client_id
-            ).to_dict(dropna=True),
+            ), dropna=True),
             headers=self.headers,
             verify=verify,
             timeout=timeout,
@@ -1455,7 +1467,7 @@ class IPayProvider(BaseIPayProvider):
         request = Request(
             'POST',
             self.installment_order_api,
-            json=InstallmentOrderData(order_id=order_id).to_dict(dropna=True),
+            json=to_dict(InstallmentOrderData(order_id=order_id), dropna=True),
             headers=self.headers,
             verify=verify,
             timeout=timeout,

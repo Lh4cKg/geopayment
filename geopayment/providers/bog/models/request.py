@@ -1,21 +1,17 @@
 import typing as t
-from dataclasses import dataclass, field
-from decimal import Decimal, ROUND_UP
+from decimal import Decimal
 
-from geopayment.providers.models import ValidationModel
+from pydantic import Field
+from pydantic.dataclasses import dataclass
 
 
 @dataclass
-class AuthData(ValidationModel):
+class AuthData:
     grant_type: t.Literal['client_credentials'] = 'client_credentials'
 
-    def __post_init__(self):
-        if self.grant_type != 'client_credentials':
-            raise ValueError('`grant_type` must be `client_credentials`')
-
 
 @dataclass
-class Item(ValidationModel):
+class Item:
     amount: Decimal
     description: str
     quantity: int
@@ -23,33 +19,32 @@ class Item(ValidationModel):
 
 
 @dataclass
-class Amount(ValidationModel):
+class Amount:
     value: Decimal
     currency_code: t.Literal['GEL', 'EUR', 'USD', 'GBP']
 
 
 @dataclass
-class PurchaseUnit(ValidationModel):
-    amount: Amount | dict[str, t.Any]
+class PurchaseUnit:
+    amount: Amount | dict
     # removed from bog apis
     industry_type: t.Literal['ECOMMERCE'] = 'ECOMMERCE'
 
 
 @dataclass
-class CheckoutData(ValidationModel):
+class CheckoutData:
     redirect_url: str
     amount: Decimal | None = None
-    items: list[Item | dict[str, t.Any]] = field(default_factory=list)
+    shop_order_id: str | None = None
+    items: list[Item | dict[str, t.Any]] = Field(default_factory=list)
     intent: t.Literal['AUTHORIZE', 'CAPTURE'] = 'AUTHORIZE'
     locale: t.Literal['ka', 'en-US'] = 'ka'
-    shop_order_id: str | None = None
     currency_code: t.Literal['GEL', 'EUR', 'USD', 'GBP'] = 'GEL'
-    purchase_units: list[PurchaseUnit | dict[str, t.Any]] = field(default_factory=list)
+    purchase_units: list[PurchaseUnit] = Field(default_factory=list)
     capture_method: t.Literal['AUTOMATIC', 'MANUAL'] = 'AUTOMATIC'
     show_shop_order_id_on_extract: bool = False
 
     def __post_init__(self):
-        super().__post_init__()
         amount = Decimal(0)
         for item in self.items:
             amount += item.amount
@@ -59,9 +54,7 @@ class CheckoutData(ValidationModel):
             PurchaseUnit(
                 amount={
                     'currency_code': self.currency_code,
-                    'value': amount.quantize(
-                        Decimal('.00'), rounding=ROUND_UP
-                    )
+                    'value': amount
                 }
             )
         )
@@ -70,72 +63,13 @@ class CheckoutData(ValidationModel):
 
 
 @dataclass
-class InstallmentCartItem(ValidationModel):
-    total_item_amount: Decimal
-    item_description: str
-    total_item_qty: int
-    item_vendor_code: str
-    product_image_url: str | None = None
-    item_site_detail_url: str | None = None
-
-
-@dataclass
-class InstallmentCheckoutData(ValidationModel):
-    cart_items: list[InstallmentCartItem | dict[str, t.Any]]
-    shop_order_id: str
-    success_redirect_url: str
-    fail_redirect_url: str
-    reject_redirect_url: str
-    installment_month: int
-    installment_type: t.Literal['STANDARD', 'ZERO'] = 'STANDARD'
-    amount: Decimal | None = None
-    intent: t.Literal['LOAN'] = 'LOAN'
-    locale: t.Literal['ka', 'en-US'] = 'ka'
-    currency_code: t.Literal['GEL', 'EUR', 'USD', 'GBP'] = 'GEL'
-    purchase_units: list[PurchaseUnit | dict[str, t.Any]] = field(default_factory=list)
-    validate_items: bool = True
-
-    def __post_init__(self):
-        super().__post_init__()
-
-        amount = Decimal(0)
-        for item in self.cart_items:
-            amount += item.total_item_amount
-
-        amount = self.amount or amount
-        self.purchase_units.append(
-            PurchaseUnit(
-                amount={
-                    'currency_code': self.currency_code,
-                    'value': amount.quantize(
-                        Decimal('.00'), rounding=ROUND_UP
-                    )
-                }
-            )
-        )
-        self.currency_code = None
-        self.amount = None
-
-
-@dataclass
-class InstallmentCalculateData(ValidationModel):
-    amount: Decimal
-    client_id: str
-
-
-@dataclass
-class InstallmentOrderData(ValidationModel):
-    order_id: str
-
-
-@dataclass
-class RefundData(ValidationModel):
+class RefundData:
     order_id: str
     amount: Decimal | None = None
 
 
 @dataclass
-class OrderData(ValidationModel):
+class OrderData:
     order_id: str
 
 
@@ -159,9 +93,9 @@ class PreAuthData(OrderData):
 class SubscriptionData(OrderData):
     order_id: str
     amount: Decimal
-    currency_code: t.Literal['GEL', 'USD', 'EUR', 'GBP'] = 'GEL'
     shop_order_id: str | None = None
     purchase_description: str | None = None
+    currency_code: t.Literal['GEL', 'USD', 'EUR', 'GBP'] = 'GEL'
 
 
 ###################################
@@ -170,13 +104,12 @@ class SubscriptionData(OrderData):
 
 
 @dataclass
-class Buyer(ValidationModel):
+class Buyer:
     full_name: str
     masked_email: str | None = None
     masked_phone: str | None = None
 
     def __post_init__(self):
-        super().__post_init__()
         if self.masked_phone:
             self.masked_phone = f'{self.masked_phone[:2]}*****{self.masked_phone[-2:]}'
         if self.masked_email:
@@ -189,7 +122,7 @@ class Buyer(ValidationModel):
 
 
 @dataclass
-class Basket(ValidationModel):
+class Basket:
     product_id: str
     quantity: int
     unit_price: Decimal
@@ -206,55 +139,55 @@ class Basket(ValidationModel):
 
 
 @dataclass
-class Delivery(ValidationModel):
+class Delivery:
     amount: Decimal
 
 
 @dataclass
-class OrderPurchaseUnits(ValidationModel):
+class OrderPurchaseUnits:
     total_amount: Decimal
-    basket: list[Basket | dict[str, t.Any]]
+    basket: list[Basket] #  | dict[str, t.Any]
     total_discount_amount: Decimal | None = None
-    currency: t.Literal['GEL', 'USD', 'EUR', 'GBP'] = 'GEL'
     delivery: Delivery | None = None
+    currency: t.Literal['GEL', 'USD', 'EUR', 'GBP'] = 'GEL'
 
 
 @dataclass
-class RedirectUrls(ValidationModel):
+class RedirectUrls:
     success: str
     fail: str
 
 
 @dataclass
-class Loan(ValidationModel):
+class Loan:
     type: str
     month: int
 
 
 @dataclass
-class Campaign(ValidationModel):
+class Campaign:
     card: t.Literal['visa', 'ms', 'solo']
     type: t.Literal['restrict', 'client_discount']
 
 
 @dataclass
-class GooglePay(ValidationModel):
+class GooglePay:
     google_pay_token: str
     external: bool = False
 
 
 @dataclass
-class ApplePay(ValidationModel):
+class ApplePay:
     external: bool = False
 
 
 @dataclass
-class Account(ValidationModel):
+class Account:
     tag: str
 
 
 @dataclass
-class Config(ValidationModel):
+class Config:
     loan: Loan | None = None
     campaign: Campaign | None = None
     google_pay: GooglePay | None = None
@@ -263,7 +196,7 @@ class Config(ValidationModel):
 
 
 @dataclass
-class OrderCheckoutData(ValidationModel):
+class OrderCheckoutData:
     callback_url: str
     purchase_units: OrderPurchaseUnits
     application_type: t.Literal['web', 'mobile'] | None = None
@@ -280,17 +213,17 @@ class OrderCheckoutData(ValidationModel):
 
 
 @dataclass
-class OrderRefundData(ValidationModel):
-    amount: Decimal | None
+class OrderRefundData:
+    amount: Decimal | None = None
 
 
 @dataclass
-class SubscribePaymentData(ValidationModel):
+class SubscribePaymentData:
     callback_url: str | None = None
     external_order_id: str | None = None
 
 
 @dataclass
-class PreAuthPaymentData(ValidationModel):
+class PreAuthPaymentData:
     amount: Decimal | None = None
     description: str | None = None
