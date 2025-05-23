@@ -1,12 +1,13 @@
 certifi==2024.7.4
 cffi==1.15.0
 charset-normalizer==2.0.7
-cryptography==43.0.1
+cryptography==44.0.1
 idna==3.7
 pycparser==2.20
 pyOpenSSL==21.0.0
 requests==2.32.0
 six==1.16.0
 urllib3==2.2.2
-setuptools~=57.0.0
+setuptools~=70.0.0
 multidict~=6.1.0
+pydantic==2.11.4

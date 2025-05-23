@@ -105,3 +105,6 @@ ENV/
 certs
 
 inst.py
+test_tbc_provider.py
+test_bog_provider.py
+test_models.py
