@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import typing as t
-from decimal import Decimal
 
 
 def verify_signature(
@@ -35,24 +34,7 @@ def verify_signature(
     pass
 
 
-def dict_factory(result: dict) -> t.Dict[str, t.Any]:
-    return {k: v for k, v in result if v or isinstance(v, bool)}
-
-
-def serialize_dict_factory(result: dict) -> t.Dict[str, t.Any]:
-    return {
-        k: str(v) if isinstance(v, Decimal) else v for k, v in result
-    }
-
-
-def dropna_serialize_dict_factory(result: dict) -> t.Dict[str, t.Any]:
-    return {
-        k: str(v) if isinstance(v, Decimal) else v for k, v in result
-        if v or isinstance(v, bool)
-    }
-
-
-def parse_response(content: str) -> t.Dict[str, str]:
+def parse_response(content: str) -> dict[str, str]:
     """
 
     :param content: response from payment provider
@@ -63,7 +45,7 @@ def parse_response(content: str) -> t.Dict[str, str]:
     """
 
     return dict(
-        item.split(': ')
+        item.strip().split(': ')
         for item in content.split('\n')
         if item.strip()
     )

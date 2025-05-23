@@ -17,7 +17,7 @@ def get_client_ip(request) -> str:
 def get_signature(request) -> str:
     """
     :param request:
-    :return: client ip address
+    :return: RSA callback signature
     """
     if hasattr(request, 'META'):
         signature = request.META.get('HTTP_CALLBACK_SIGNATURE', '')
