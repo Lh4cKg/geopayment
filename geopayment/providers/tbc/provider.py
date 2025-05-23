@@ -1,113 +1,124 @@
-# _*_ coding: utf-8 _*_
+from __future__ import annotations
 
-"""
-Created on Apr 14, 2020
+import typing as t
+from decimal import Decimal
 
-@author: Lasha Gogua
-"""
-
-from typing import Dict, Any, Optional, Tuple
-
-from geopayment.providers.utils import _request, tbc_params
+from geopayment.providers.request import Request
+from geopayment.providers.tbc.base import BaseTBCProvider
+from geopayment.providers.tbc.models.request import (
+    Create,
+    Status,
+    Refund,
+    Reversal,
+    RefundToDebitCard,
+    Recurring,
+    CardRegister,
+    CardRegisterConfirm,
+    PreAuth,
+    PreAuthConfirm,
+    PreAuthRecurring,
+    PreAuthCardRegisterConfirm,
+    EndOfBusinessDay,
+)
+from geopayment.providers.tbc.models.response import (
+    ErrorResponse,
+    CreateResponse,
+    StatusResponse,
+    PreAuthResponse,
+    PreAuthConfirmResponse,
+    RefundResponse,
+    ReversalResponse,
+    EndBusinessDayResponse,
+)
+from geopayment.utils.currency import gel_to_tetri, get_currency_code
+from geopayment.utils.serialize import to_dict
 
 
 __all__ = ['TBCProvider']
 
-
-class BaseTBCProvider(object):
-    trans_id: str = None
-    refund_trans_id: str = None
-
-    def __init__(self) -> None:
-        assert callable(self.description) is False, \
-            '`description` must be property, not callable'
-        assert callable(self.client_ip) is False, \
-            '`client_ip` must be property, not callable'
-        assert callable(self.cert) is False, \
-            '`cert` must be property, not callable'
-        assert callable(self.service_url) is False, \
-            '`service_url` must be property, not callable'
-
-    @property
-    def description(self) -> str:
-        """
-
-        :return: merchant description
-        """
-        raise NotImplementedError(
-            'Provider needs implement `description` function'
-        )
-
-    @property
-    def client_ip(self) -> str:
-        """
-        client accepted ip address
-        :return:
-        """
-        raise NotImplementedError(
-            'Provider needs implement `client_ip` function'
-        )
-
-    @property
-    def cert(self) -> Tuple[str, str]:
-        """
-        Certificate path
-        :return: certificate as tuple (cert, key)
-        """
-        raise NotImplementedError(
-            'Provider needs implement `cert` function'
-        )
-
-    @property
-    def service_url(self) -> str:
-        """
-
-        :return: merchant service url
-        """
-        raise NotImplementedError(
-            'Provider needs implement `service_url` function'
-        )
+from providers.tbc.models.response import SuccessResponse
 
 
 class TBCProvider(BaseTBCProvider):
 
-    @tbc_params('amount', 'currency', 'client_ip_addr',
-                'description', command='v', language='ka', msg_type='SMS')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def get_trans_id(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def create(
+            self,
+            *,
+            amount: Decimal,
+            currency: str | int,
+            client_ip_addr: str = None,
+            description: str = None,
+            language: t.Literal['ka', 'en'] = 'ka',
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> CreateResponse | ErrorResponse:
         """
-        command: Transaction type
-        language: The language of the transaction performed
-        msg_type: Transaction authorization type
-
-        :param kwargs: Other operation parameters
-        :return: Transaction id from merchant response
+        :param amount: The full amount is to be paid.
+        :param currency: A payment currency
+        :param language: The language of the transaction performed
+        :param client_ip_addr:
+        :param description: transaction description
+        :param verify: in which case it controls whether we verify
+        the server's TLS certificate
+        :type verify: bool
+        :param timeout: How many seconds to wait for the server to send data
+        before giving up
+        :type timeout: int or Tuple[int, int]
 
         >>> provider = MyTBCProvider()
-        >>> provider.get_trans_id(amount=23.45, currency='GEL')
+        >>> provider.create_transaction(amount=23.45, currency='GEL')
         {'TRANSACTION_ID': 'NMQfTRLUTne3eywr9YnAU78Qxxw='}
 
         TRANSACTION_ID - transaction identifier
         error          - in case of an error
 
+        :return: AuthResponse
         """
 
-        result = kwargs['result']
-        if 'TRANSACTION_ID' in result:
-            self.trans_id = result['TRANSACTION_ID']
-        return result
+        if not client_ip_addr:
+            client_ip_addr = self.config.client_ip
 
-    @tbc_params('trans_id', 'client_ip_addr', command='c')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def check_trans_status(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        if not description:
+            description = self.config.description
+        data = Create(
+            command=self.command.create,
+            amount=gel_to_tetri(amount),
+            currency=get_currency_code(currency),
+            client_ip_addr=client_ip_addr,
+            description=description,
+            language=language,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.create, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return CreateResponse(
+            message=response.text, status_code=response.status_code
+        )
+
+    def status(
+            self,
+            *,
+            transaction_id: str,
+            client_ip_addr: str = None,
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> StatusResponse | ErrorResponse:
         """
-        command: Transaction type
-        :param kwargs: Other operation parameters
-        :return: Transaction status codes from merchant response
+        :param transaction_id: created transaction identifier
+        :param client_ip_addr:
+        :param verify: in which case it controls whether we verify
+        the server's TLS certificate
+        :type verify: bool
+        :param timeout: How many seconds to wait for the server to send data
+        before giving up
+        :type timeout: int or Tuple[int, int]
 
         >>> provider = MyTBCProvider()
-        >>> provider.get_trans_id(amount=23.45, currency='GEL')
-        >>> provider.check_trans_status(trans_id=provider.trans_id)
+        >>> trans = provider.create_transaction(amount=23.45, currency='GEL')
+        >>> provider.transaction_status(trans_id=trans.trans_id)
         {'RESULT': 'OK', 'RESULT_CODE': '000', '3DSECURE': 'ATTEMPTED',
         'CARD_NUMBER': '', 'RRN': '', 'APPROVAL_CODE': ''}
 
@@ -122,11 +133,32 @@ class TBCProvider(BaseTBCProvider):
 
         """
 
-        return kwargs['result']
+        if not client_ip_addr:
+            client_ip_addr = self.config.client_ip
 
-    @tbc_params('trans_id', 'amount', command='r')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def reversal_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        data = Status(
+            command=self.command.status,
+            trans_id=transaction_id,
+            client_ip_addr=client_ip_addr,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.status, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return StatusResponse(
+            message=response.text, status_code=response.status_code
+        )
+
+    def reversal(
+            self,
+            *,
+            amount: Decimal,
+            transaction_id: str,
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> ReversalResponse | ErrorResponse:
         """
         command: Transaction type
         :param kwargs: Other operation parameters
@@ -144,11 +176,29 @@ class TBCProvider(BaseTBCProvider):
 
         """
 
-        return kwargs['result']
+        data = Reversal(
+            command=self.command.reversal,
+            trans_id=transaction_id,
+            amount=gel_to_tetri(amount),
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.reversal, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return ReversalResponse(
+            message=response.text, status_code=response.status_code
+        )
 
-    @tbc_params('trans_id', 'amount', command='k')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def refund_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def refund(
+            self,
+            *,
+            amount: Decimal,
+            transaction_id: str,
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> RefundResponse | ErrorResponse:
         """
         command: Transaction type
         :param kwargs: Other operation parameters
@@ -167,12 +217,32 @@ class TBCProvider(BaseTBCProvider):
 
         """
 
-        return kwargs['result']
+        data = Refund(
+            command=self.command.refund,
+            trans_id=transaction_id,
+            amount=gel_to_tetri(amount),
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.refund, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return RefundResponse(
+            message=response.text, status_code=response.status_code
+        )
 
-    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
-                command='a', language='ka', msg_type='DMS')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def pre_auth_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def pre_auth(
+            self,
+            *,
+            amount: Decimal,
+            currency: str | int,
+            description: str = None,
+            client_ip_addr: str = None,
+            language: t.Literal['ka', 'en'] = 'ka',
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> PreAuthResponse | ErrorResponse:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -189,15 +259,42 @@ class TBCProvider(BaseTBCProvider):
 
         """
 
-        result = kwargs['result']
-        if 'TRANSACTION_ID' in result:
-            self.trans_id = result['TRANSACTION_ID']
-        return result
+        if client_ip_addr is None:
+            client_ip_addr = self.config.client_ip
+        if description is None:
+            description = self.config.description
 
-    @tbc_params('trans_id', 'amount', 'currency', 'client_ip_addr',
-                'description', command='t', language='ka', msg_type='DMS')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def confirm_pre_auth_trans(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        data = PreAuth(
+            command=self.command.pre_auth,
+            amount=gel_to_tetri(amount),
+            currency=get_currency_code(currency),
+            description=description,
+            client_ip_addr=client_ip_addr,
+            language=language,
+            msg_type=self.message_type.dms,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.pre_auth, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return PreAuthResponse(
+            message=response.text, status_code=response.status_code
+        )
+
+    def pre_auth_confirm(
+            self,
+            *,
+            transaction_id: str,
+            amount: Decimal,
+            currency: str | int,
+            description: str = None,
+            client_ip_addr: str = None,
+            language: t.Literal['ka', 'en'],
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> PreAuthConfirmResponse | ErrorResponse:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -219,14 +316,46 @@ class TBCProvider(BaseTBCProvider):
         error           - in case of an error
 
         """
+        if client_ip_addr is None:
+            client_ip_addr = self.config.client_ip
+        if description is None:
+            description = self.config.description
 
-        return kwargs['result']
+        data = PreAuthConfirm(
+            command=self.command.pre_auth_confirm,
+            trans_id=transaction_id,
+            amount=gel_to_tetri(amount),
+            currency=get_currency_code(currency),
+            description=description,
+            client_ip_addr=client_ip_addr,
+            language=language,
+            msg_type=self.message_type.dms,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.pre_auth_confirm, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return PreAuthConfirmResponse(
+            message=response.text, status_code=response.status_code
+        )
 
-    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
-                'biller_client_id', 'expiry', 'perspayee_expiry', 'perspayee_gen',
-                command='z', language='ka', msg_type='SMS')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def card_register_with_deduction(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def card_register_confirm(
+            self,
+            *,
+            amount: Decimal,
+            currency: str | int,
+            description: str,
+            client_ip_addr: str,
+            biller_client_id: str,
+            expiry: str,
+            perspayee_expiry: str,
+            perspayee_gen: str,
+            language: t.Literal['ka', 'en'] = 'ka',
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> SuccessResponse | ErrorResponse:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -243,13 +372,44 @@ class TBCProvider(BaseTBCProvider):
         error          - in case of an error
 
         """
-        return kwargs['result']
+        data = CardRegisterConfirm(
+            command=self.command.card_register_confirm,
+            amount=gel_to_tetri(amount),
+            currency=get_currency_code(currency),
+            description=description,
+            client_ip_addr=client_ip_addr,
+            language=language,
+            biller_client_id=biller_client_id,
+            expiry=expiry,
+            perspayee_expiry=perspayee_expiry,
+            perspayee_gen=perspayee_gen,
+            msg_type=self.message_type.sms,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.card_register_confirm, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return SuccessResponse(
+            message=response.text, status_code=response.status_code
+        )
 
-    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
-                'biller_client_id', 'expiry', 'perspayee_expiry', 'perspayee_gen',
-                command='d', language='ka', msg_type='DMS')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def pre_auth_card_register_with_deduction(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def pre_auth_card_register_confirm(
+            self,
+            *,
+            amount: Decimal,
+            currency: str | int,
+            description: str,
+            client_ip_addr: str,
+            biller_client_id: str,
+            expiry: str,
+            perspayee_expiry: str,
+            perspayee_gen: str,
+            language: t.Literal['ka', 'en'] = 'ka',
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> SuccessResponse | ErrorResponse:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -266,13 +426,43 @@ class TBCProvider(BaseTBCProvider):
         error          - in case of an error
 
         """
-        return kwargs['result']
+        data = PreAuthCardRegisterConfirm(
+            command=self.command.pre_auth_card_register_confirm,
+            amount=gel_to_tetri(amount),
+            currency=get_currency_code(currency),
+            description=description,
+            client_ip_addr=client_ip_addr,
+            language=language,
+            biller_client_id=biller_client_id,
+            expiry=expiry,
+            perspayee_expiry=perspayee_expiry,
+            perspayee_gen=perspayee_gen,
+            msg_type=self.message_type.dms,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.pre_auth_card_register_confirm, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return SuccessResponse(
+            message=response.text, status_code=response.status_code
+        )
 
-    @tbc_params('currency', 'client_ip_addr', 'description', 'biller_client_id',
-                'expiry', 'perspayee_expiry', 'perspayee_gen',
-                command='p', language='ka', msg_type='AUTH')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def card_register_with_zero_auth(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def card_register(
+            self,
+            *,
+            currency: str | int,
+            description: str,
+            client_ip_addr: str,
+            biller_client_id: str,
+            expiry: str,
+            perspayee_expiry: str,
+            perspayee_gen: str,
+            language: t.Literal['ka', 'en'] = 'ka',
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> SuccessResponse | ErrorResponse:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -289,12 +479,41 @@ class TBCProvider(BaseTBCProvider):
         error          - in case of an error
 
         """
-        return kwargs['result']
 
-    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
-                'biller_client_id', command='e', language='ka')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def recurring_payment(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+        data = CardRegister(
+            command=self.command.card_register,
+            currency=get_currency_code(currency),
+            description=description,
+            client_ip_addr=client_ip_addr,
+            language=language,
+            biller_client_id=biller_client_id,
+            expiry=expiry,
+            perspayee_expiry=perspayee_expiry,
+            perspayee_gen=perspayee_gen,
+            msg_type=self.message_type.auth,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.card_register, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return SuccessResponse(
+            message=response.text, status_code=response.status_code
+        )
+
+    def recurring(
+            self,
+            *,
+            amount: Decimal,
+            currency: str | int,
+            description: str,
+            client_ip_addr: str,
+            biller_client_id: str,
+            language: t.Literal['ka', 'en'] = 'ka',
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> SuccessResponse | ErrorResponse:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -314,15 +533,37 @@ class TBCProvider(BaseTBCProvider):
         error          - in case of an error
 
         """
-        result = kwargs['result']
-        if 'TRANSACTION_ID' in result:
-            self.trans_id = result['TRANSACTION_ID']
-        return result
+        data = Recurring(
+            command=self.command.recurring,
+            amount=gel_to_tetri(amount),
+            currency=get_currency_code(currency),
+            description=description,
+            client_ip_addr=client_ip_addr,
+            language=language,
+            biller_client_id=biller_client_id,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.recurring, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return SuccessResponse(
+            message=response.text, status_code=response.status_code
+        )
 
-    @tbc_params('amount', 'currency', 'client_ip_addr', 'description',
-                'biller_client_id', command='f', language='ka')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def pre_auth_recurring_payment(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def pre_auth_recurring(
+            self,
+            *,
+            amount: Decimal,
+            currency: str | int,
+            description: str,
+            client_ip_addr: str,
+            biller_client_id: str,
+            language: t.Literal['ka', 'en'] = 'ka',
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> SuccessResponse | ErrorResponse:
         """
         command: Transaction type
         language: The language of the transaction performed
@@ -342,14 +583,33 @@ class TBCProvider(BaseTBCProvider):
         error          - in case of an error
 
         """
-        result = kwargs['result']
-        if 'TRANSACTION_ID' in result:
-            self.trans_id = result['TRANSACTION_ID']
-        return result
+        data = PreAuthRecurring(
+            command=self.command.pre_auth_recurring,
+            amount=gel_to_tetri(amount),
+            currency=get_currency_code(currency),
+            description=description,
+            client_ip_addr=client_ip_addr,
+            language=language,
+            biller_client_id=biller_client_id,
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.pre_auth_recurring, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return SuccessResponse(
+            message=response.text, status_code=response.status_code
+        )
 
-    @tbc_params('trans_id', 'amount', command='g')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def refund_to_debit_card(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+    def refund_to_debit_card(
+            self,
+            *,
+            transaction_id: str,
+            amount: Decimal,
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> RefundResponse | ErrorResponse:
         """
         command: Transaction type
 
@@ -367,16 +627,29 @@ class TBCProvider(BaseTBCProvider):
         error           - in case of an error
 
         """
-        if 'trans_id' in kwargs:
-            self.trans_id = kwargs['trans_id']
-        result = kwargs['result']
-        if 'REFUND_TRANS_ID' in result:
-            self.refund_trans_id = result['REFUND_TRANS_ID']
-        return result
+        data = RefundToDebitCard(
+            command=self.command.refund_to_debit_card,
+            trans_id=transaction_id,
+            amount=gel_to_tetri(amount),
+        )
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.refund_to_debit_card, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return RefundResponse(
+            message=response.text, status_code=response.status_code
+        )
 
-    @tbc_params(command='b')
-    @_request(verify=False, timeout=(3, 10), method='post')
-    def end_of_business_day(self, **kwargs: Optional[Any]) -> Dict[str, str]:
+
+
+    def end_of_business_day(
+            self,
+            *,
+            verify: bool = True,
+            timeout: t.Tuple[int, int] | int = (3, 10)
+    ) -> EndBusinessDayResponse | ErrorResponse:
         """
         command: Transaction type
         :param kwargs: Other operation parameters
@@ -400,15 +673,13 @@ class TBCProvider(BaseTBCProvider):
         FLD_089         -
 
         """
-
-        return kwargs['result']
-
-    @classmethod
-    def quick_end_of_business_day(cls) -> Dict[str, str]:
-        """
-        This function is same as `end_of_business_day` for quick call end of
-        business day command.
-
-        :return: End of business day status codes from merchant response
-        """
-        return cls().end_of_business_day()
+        data = EndOfBusinessDay(command=self.command.end_business_day)
+        response = self.perform_request(data, verify, timeout)
+        self._set_original_response(self.end_of_business_day, response)
+        if response.status_code != 200:
+            return ErrorResponse(
+                message=response.text, status_code=response.status_code
+            )
+        return EndBusinessDayResponse(
+            message=response.text, status_code=response.status_code
+        )
