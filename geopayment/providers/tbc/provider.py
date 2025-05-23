@@ -4,7 +4,7 @@ import typing as t
 from decimal import Decimal
 
 from geopayment.providers.request import Request
-from geopayment.providers.tbc.base import BaseTBCProvider
+from geopayment.providers.tbc.base import BaseTBCPayProvider
 from geopayment.providers.tbc.models.request import (
     Create,
     Status,
@@ -39,7 +39,7 @@ __all__ = ['TBCProvider']
 from providers.tbc.models.response import SuccessResponse
 
 
-class TBCProvider(BaseTBCProvider):
+class TBCProvider(BaseTBCPayProvider):
 
     def create(
             self,

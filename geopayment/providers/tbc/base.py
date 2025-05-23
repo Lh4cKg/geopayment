@@ -9,7 +9,7 @@ from geopayment.providers.tbc.models.transaction import Command, MessageType
 from geopayment.utils.serialize import to_dict
 
 
-__all__ = ['BaseTBCProvider']
+__all__ = ['BaseTBCPayProvider']
 
 
 
@@ -82,7 +82,7 @@ class AbstractTBCProvider:
         return header
 
 
-class BaseTBCProvider(AbstractTBCProvider):
+class BaseTBCPayProvider(AbstractTBCProvider):
 
     def __init__(self) -> None:
         super().__init__()
