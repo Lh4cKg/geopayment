@@ -37,19 +37,21 @@ class Request:
             url: str,
             /,
             *,
-            params:  t.Dict[str, t.Any] | None = None,
-            json: t.Dict[str, t.Any] | None = None,
-            data: t.Dict[str, t.Any] | str | None = None,
+            params:  dict[str, t.Any] | None = None,
+            json: dict[str, t.Any] | None = None,
+            data: dict[str, t.Any] | str | None = None,
+            cert: tuple[str, str] | str | None = None,
             headers: Header = Header(),
             verify: bool = True,
-            timeout: t.Tuple[int, int] = (3, 10),
-            **kwargs: t.Optional[t.Dict[t.Any, t.Any]],
+            timeout: tuple[int, int] = (3, 10),
+            **kwargs: t.Optional[dict[t.Any, t.Any]],
     ):
         self.method = method.upper()
         self.url = url
         self.params = params
         self.json = json
         self.data = data
+        self.cert = cert
         if not isinstance(headers, Header):
             raise TypeError('`headers` must be an instance of `Header`')
         self.headers = headers
@@ -83,6 +85,7 @@ class Request:
             allow_redirects=self.allow_redirects,
             timeout=self.timeout,
             verify=self.verify,
+            cert=self.cert,
             **self.kwargs
         )
         response.headers = Header(response.headers)
